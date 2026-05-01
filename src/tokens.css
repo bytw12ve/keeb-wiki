@@ -1,0 +1,76 @@
+@font-face {
+  font-family: "Anonymous Pro";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/AnonymousPro-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Anonymous Pro";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/AnonymousPro-Italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Anonymous Pro";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/AnonymousPro-Bold.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Anonymous Pro";
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/AnonymousPro-BoldItalic.woff2") format("woff2");
+}
+
+:root {
+  --kw-bg:           #1E1B2E;
+  --kw-surface:      #17142A;
+  --kw-surface-2:    #2D2845;
+  --kw-surface-3:    #3D3660;
+
+  --kw-lavender:     #B8A9E0;
+  --kw-pink:         #E8A8C0;
+  --kw-blue:         #A8C8E8;
+  --kw-green:        #A8E0A8;
+
+  --kw-lavender-bg:  #2D1F4A;
+  --kw-pink-bg:      #2D1F2A;
+  --kw-blue-bg:      #1F2D3A;
+  --kw-green-bg:     #1F2D1F;
+
+  --kw-text:         #F5F2E8;
+  --kw-text-2:       #C8C0E0;
+  --kw-text-3:       #9B91B8;
+  --kw-text-4:       #6B6490;
+
+  --kw-border:       #2D2845;
+  --kw-border-2:     #3D3660;
+
+  --kw-r-key:        4px;
+  --kw-r-input:      6px;
+  --kw-r-card:       8px;
+  --kw-r-shell:      12px;
+  --kw-r-pill:       20px;
+
+  --kw-mono: "Anonymous Pro", "JetBrains Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #0E0C18;
+  min-height: 100vh;
+  font-family: var(--kw-mono);
+  color: var(--kw-text-2);
+}
+
+button { font-family: var(--kw-mono); }
+
+::selection { background: #B8A9E0; color: #1E1B2E; }
