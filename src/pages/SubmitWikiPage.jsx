@@ -4,6 +4,7 @@ import { KW } from '../tokens.js'
 import Nav from '../components/Nav.jsx'
 import Footer from '../components/Footer.jsx'
 import Button from '../components/Button.jsx'
+import { submitWikiArticle } from '../lib/supabase.js'
 
 const CATEGORIES = ['beginner guides','modding guides','parts glossary','sound & feel','community & buying','about']
 const TAGS = ['beginner friendly','advanced','modding','linear','tactile','clicky','sound','buying guide']
@@ -104,6 +105,8 @@ export default function SubmitWikiPage() {
   const [sections, setSections] = useState([{ heading: '', content: '' }, { heading: '', content: '' }])
   const [combined, setCombined] = useState('')
   const [success, setSuccess] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState(null)
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
   const toggleTag = (t) => setForm(f => ({ ...f, tags: f.tags.includes(t) ? f.tags.filter(x => x !== t) : [...f.tags, t] }))
@@ -112,7 +115,26 @@ export default function SubmitWikiPage() {
   const removeSection = (i) => setSections(s => s.filter((_, idx) => idx !== i))
   const updateSection = (i, val) => setSections(s => { const next = [...s]; next[i] = val; return next })
 
-  const handleSubmit = () => setSuccess(true)
+  const handleSubmit = async () => {
+    if (!form.title.trim() || !form.category) return
+    setSubmitting(true)
+    setError(null)
+    const { error: err } = await submitWikiArticle({
+      title: form.title,
+      category: form.category,
+      description: form.description,
+      tags: form.tags,
+      format: form.format,
+      sections,
+      combined,
+    })
+    setSubmitting(false)
+    if (err) {
+      setError('something went wrong. please try again.')
+    } else {
+      setSuccess(true)
+    }
+  }
 
   if (success) return (
     <div style={{ background: KW.bg, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -205,11 +227,16 @@ export default function SubmitWikiPage() {
         </FormSection>
 
         {/* Actions */}
+        {error && (
+          <div style={{ font: '400 10px var(--kw-mono)', color: '#f87171', textAlign: 'right', marginBottom: 8 }}>{error}</div>
+        )}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
           <button style={{ height: 33, padding: '0 18px', borderRadius: 6, background: 'transparent', border: `1px solid ${KW.surface3}`, color: KW.text3, font: '400 11px var(--kw-mono)', cursor: 'pointer' }}>
             save draft
           </button>
-          <Button onClick={handleSubmit}>submit for review →</Button>
+          <Button onClick={handleSubmit} disabled={submitting}>
+            {submitting ? 'submitting...' : 'submit for review →'}
+          </Button>
         </div>
       </div>
       <Footer />

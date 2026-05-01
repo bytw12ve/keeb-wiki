@@ -79,3 +79,67 @@ export async function fetchBuildBySlug(slug) {
     .single()
   return { data, error }
 }
+
+// ── wiki ─────────────────────────────────────────────────────────
+
+const CATEGORY_SLUG_MAP = {
+  'beginner guides': 'beginner-guides',
+  'modding guides': 'modding-guides',
+  'parts glossary': 'parts-glossary',
+  'sound & feel': 'sound-feel',
+  'community & buying': 'community-buying',
+  'about': 'about',
+}
+
+export async function fetchWikiArticles({ category, status = 'published', limit } = {}) {
+  let query = supabase
+    .from('wiki_articles')
+    .select('*')
+    .eq('status', status)
+    .order('updated_at', { ascending: false })
+  if (category) query = query.eq('category', category)
+  if (limit) query = query.limit(limit)
+  const { data, error } = await query
+  return { data: data || [], error }
+}
+
+export async function fetchWikiArticleBySlug(slug) {
+  const { data, error } = await supabase
+    .from('wiki_articles')
+    .select('*')
+    .eq('slug', slug)
+    .single()
+  return { data, error }
+}
+
+export async function searchWikiArticles(q) {
+  const { data, error } = await supabase
+    .from('wiki_articles')
+    .select('*')
+    .eq('status', 'published')
+    .or(`title.ilike.%${q}%,short_description.ilike.%${q}%`)
+    .order('updated_at', { ascending: false })
+  return { data: data || [], error }
+}
+
+export async function submitWikiArticle({ title, category, description, tags, format, sections, combined }) {
+  const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+  const { data, error } = await supabase
+    .from('wiki_articles')
+    .insert({
+      slug,
+      title,
+      category: CATEGORY_SLUG_MAP[category] || category,
+      short_description: description,
+      tags,
+      format,
+      content: format === 'sections'
+        ? sections.filter(s => s.heading || s.content).map(s => ({ heading: s.heading, body: s.content }))
+        : null,
+      combined_content: format === 'combined' ? combined : null,
+      status: 'pending',
+    })
+    .select()
+    .single()
+  return { data, error }
+}
