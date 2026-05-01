@@ -17,6 +17,7 @@ export default function Nav() {
     : location.pathname.startsWith("/builds") ? "builds"
     : location.pathname.startsWith("/submit") ? "submit"
     : location.pathname.startsWith("/wiki") ? "wiki"
+    : location.pathname.startsWith("/submit-wiki") ? "submit"
     : null;
 
   return (
