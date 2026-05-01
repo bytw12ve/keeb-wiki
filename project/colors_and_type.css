@@ -1,0 +1,104 @@
+/* ──────────────────────────────────────────────────────────────────
+   keeb.wiki — color & type tokens
+   Dark, low-contrast lavender palette with mono type throughout.
+   ────────────────────────────────────────────────────────────────── */
+
+@font-face {
+  font-family: "Anonymous Pro";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./fonts/AnonymousPro-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Anonymous Pro";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("./fonts/AnonymousPro-Italic.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Anonymous Pro";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("./fonts/AnonymousPro-Bold.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Anonymous Pro";
+  font-style: italic;
+  font-weight: 700;
+  font-display: swap;
+  src: url("./fonts/AnonymousPro-BoldItalic.woff2") format("woff2");
+}
+
+:root {
+  /* ── core surfaces ── */
+  --kw-bg:           #1E1B2E;   /* page background */
+  --kw-surface:      #17142A;   /* card / nav / footer surface */
+  --kw-surface-2:    #2D2845;   /* input / track / muted chip */
+  --kw-surface-3:    #3D3660;   /* hover / focus border */
+
+  /* ── accents (color-coded by topic) ── */
+  --kw-lavender:     #B8A9E0;   /* primary — layout / modding / brand */
+  --kw-pink:         #E8A8C0;   /* materials / sound-feel */
+  --kw-blue:         #A8C8E8;   /* switches / tips / beginner */
+  --kw-green:        #A8E0A8;   /* community / success */
+
+  /* tinted accent backgrounds (chips on dark) */
+  --kw-lavender-bg:  #2D1F4A;
+  --kw-pink-bg:      #2D1F2A;
+  --kw-blue-bg:      #1F2D3A;
+  --kw-green-bg:     #1F2D1F;
+  --kw-warm-bg:      #2A2520;
+
+  /* ── text ── */
+  --kw-text:         #F5F2E8;   /* high-emphasis: titles, body */
+  --kw-text-2:       #C8C0E0;   /* body / paragraph */
+  --kw-text-3:       #9B91B8;   /* secondary, labels, meta */
+  --kw-text-4:       #6B6490;   /* placeholder, disabled */
+
+  /* ── lines ── */
+  --kw-border:       #2D2845;
+  --kw-border-2:     #3D3660;
+
+  /* ── radii ── */
+  --kw-r-key:        4px;       /* keycap */
+  --kw-r-input:      6px;       /* inputs / buttons */
+  --kw-r-card:       8px;       /* bubble / card */
+  --kw-r-shell:      12px;      /* page shell */
+  --kw-r-pill:       20px;      /* pill / tag */
+
+  /* ── spacing ── */
+  --kw-page-pad:     24px;
+  --kw-section-gap:  28px;
+  --kw-card-gap:     12px;
+  --kw-card-pad:     17px;
+
+  /* ── type ── */
+  --kw-mono: "Anonymous Pro", "JetBrains Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+/* ── semantic type roles (figma sizes) ── */
+.kw-display   { font: 700 26px/1.2 var(--kw-mono); color: var(--kw-text); letter-spacing: 0; }
+.kw-h1        { font: 700 22px/1.2 var(--kw-mono); color: var(--kw-text); }
+.kw-h2        { font: 700 14px/1.2 var(--kw-mono); color: var(--kw-text); }
+.kw-h3        { font: 700 12px/1.2 var(--kw-mono); color: var(--kw-text); }
+.kw-h-bubble  { font: 700 12px/1.2 var(--kw-mono); color: var(--kw-lavender); }
+.kw-h-bubble-sm { font: 700 11px/1.2 var(--kw-mono); color: var(--kw-lavender); }
+.kw-body      { font: 400 11px/1.74 var(--kw-mono); color: var(--kw-text-2); }
+.kw-body-tight { font: 400 11px/1.2 var(--kw-mono); color: var(--kw-text-2); }
+.kw-meta      { font: 400 10px/1.2 var(--kw-mono); color: var(--kw-text-3); }
+.kw-meta-loose { font: 400 10px/1.6 var(--kw-mono); color: var(--kw-text-3); }
+.kw-label     { font: 400 10px/1.2 var(--kw-mono); color: var(--kw-text-3); letter-spacing: 0.08em; }
+.kw-tag       { font: 700 9px/1.2 var(--kw-mono); }
+.kw-button    { font: 700 11px/1.2 var(--kw-mono); }
+.kw-key       { font: 700 9px/1.2 var(--kw-mono); color: var(--kw-text); letter-spacing: 0.5px; }
+
+/* ── primitives ── */
+.kw-card {
+  background: var(--kw-surface);
+  border: 1px solid var(--kw-border);
+  border-radius: var(--kw-r-card);
+}
+.kw-bg { background: var(--kw-bg); color: var(--kw-text-2); font-family: var(--kw-mono); }
