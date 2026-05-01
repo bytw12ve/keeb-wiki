@@ -44,8 +44,6 @@ CREATE TRIGGER wiki_articles_updated_at
   FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
 
 -- ── 4. Seed ──────────────────────────────────────────────────────
-DO $seed$
-BEGIN
 
 -- ── modding-guides: how to lube switches ─────────────────────────
 INSERT INTO public.wiki_articles
@@ -108,7 +106,7 @@ VALUES (
     {"heading":"OEM profile — the stock standard","body":"OEM is what ships on most membrane keyboards. It's taller than cherry with more pronounced row sculpting. Some people love the familiar feel; others find it too tall or angled. If you've been typing on a standard keyboard your whole life, OEM will feel immediately familiar.","bullets":null,"tip":null},
     {"heading":"SA profile — the tall classic","body":"SA is a high-profile, spherical-top design based on vintage typewriter keycaps. Very tall, strongly sculpted, and with a distinctive clack due to the thick walls. Looks stunning on the right board but can cause wrist strain without a wrist rest. Takes adjustment if you're coming from a low profile.","bullets":null,"tip":"SA pairs best with heavy, tactile, or clicky switches. the tall profile amplifies sound."},
     {"heading":"KAT profile — the modern SA","body":"KAT is SA-inspired but slightly lower and with a uniform row profile (all rows the same height). Thick walls like SA, but less wrist-demanding. Good if you love the SA look but find the height uncomfortable. Relatively new — fewer colorway options than cherry or SA.","bullets":null,"tip":null},
-    {"heading":"MT3 profile — the typewriter","body":"Designed by /u/u/matt3o, MT3 is a deep-dish, heavily sculpted profile modeled on vintage typewriter caps. The deepest dish of any modern profile — your fingertips fall naturally into the center of each keycap. Pairs well with tactile switches. Limited colorway selection but growing fast.","bullets":null,"tip":"mt3 is divisive — try it at a meetup before committing to a full set."},
+    {"heading":"MT3 profile — the typewriter","body":"Designed by matt3o, MT3 is a deep-dish, heavily sculpted profile modeled on vintage typewriter caps. The deepest dish of any modern profile — your fingertips fall naturally into the center of each keycap. Pairs well with tactile switches. Limited colorway selection but growing fast.","bullets":null,"tip":"mt3 is divisive — try it at a meetup before committing to a full set."},
     {"heading":"XDA and DSA — uniform profiles","body":"Both XDA and DSA are uniform profiles: all rows are the same height. DSA is slightly shorter; XDA is slightly taller. Neither has row sculpting, which divides opinion. Some people love the consistent feel; others find the lack of sculpting disorienting. Often cheaper and available in more off-the-shelf options.","bullets":null,"tip":null},
     {"heading":"which profile should i start with","body":"Start with cherry if you want the safest choice that works on any board and has the most group buy options. Try OEM if you want something immediately familiar. Avoid SA or MT3 until you've spent time on a lower profile and know you want to go tall.","bullets":null,"tip":null}
   ]$j$::jsonb,
@@ -177,7 +175,7 @@ every build in the archive is submitted by the person who built it. they fill in
 
 the wiki is the companion to the archive. it covers everything you need to know to get started, go deeper, or understand why certain things sound and feel the way they do.
 
-keeb.wiki has no ads, no algorithm, no sponsored content, and no affiliate links. it's maintained by the community for the community.
+keeb.wiki has no ads, no algorithm, no sponsored content, and no affiliate links. it''s maintained by the community for the community.
 
 how to contribute: submit a build using the submit page. no account required. fill in as much as you can — detailed builds help the most people. if you want to write a wiki article, use the submit wiki page. articles are reviewed before going live, usually within a few days.
 
@@ -187,6 +185,9 @@ the team: keeb.wiki is maintained by a small group of volunteers from the mechan
 ) ON CONFLICT (slug) DO NOTHING;
 
 -- ── beginner-guides: choosing your first board ───────────────────
+-- NOTE: dollar signs in price ranges are written as the JSON unicode escape $
+--       so that PostgreSQL's JSONB parser decodes them to $ correctly, while
+--       avoiding Supabase SQL editor treating \u002450 / \u0024100 etc. as query parameters.
 INSERT INTO public.wiki_articles
   (slug,title,category,short_description,tags,format,content,submitted_by,status,read_time,created_at,updated_at)
 VALUES (
@@ -197,11 +198,11 @@ VALUES (
   ARRAY['beginner','beginner friendly','budget'],
   'sections',
   $j$[
-    {"heading":"set a realistic budget","body":"You can get a genuinely good keyboard for $100–150. You don't need to spend $300+ for your first board. The diminishing returns above $150 are real — a $400 board doesn't type four times better than a $100 one. Start modest, figure out what you like, then invest more deliberately.","bullets":null,"tip":"the best first board is one you'll actually use. don't let perfect be the enemy of good."},
+    {"heading":"set a realistic budget","body":"You can get a genuinely good keyboard for \u002450–150. You don't need to spend \u0024300+ for your first board. The diminishing returns above \u0024150 are real — a \u0024400 board doesn't type four times better than a \u0024100 one. Start modest, figure out what you like, then invest more deliberately.","bullets":null,"tip":"the best first board is one you'll actually use. don't let perfect be the enemy of good."},
     {"heading":"pick a layout first","body":"Decide how many keys you need before looking at any specific boards. If you use a numpad daily, don't buy a 60%. If you never use function keys, you probably don't need a 75%. Layout is the hardest thing to change — everything else is modifiable.","bullets":["numpad user → full size or 1800 layout","function keys + arrows needed → 75% or TKL","want compact but arrows are non-negotiable → 65%","want maximum desk space, fine with layers → 60% or 40%"],"tip":null},
-    {"heading":"switch type matters more than you think","body":"Linear, tactile, and clicky switches feel and sound completely different. If possible, try before you buy. Most cities have a keyboard meetup or a store with a tester. Online, Novelkeys and Cannonkeys sell switch testers for under $20.","bullets":["linear — smooth keypress with no bump, quiet (with right switches). good for gaming and fast typists","tactile — a physical bump at the actuation point. popular for typing. boba U4T and Holy Pandas are well-regarded","clicky — bump plus an audible click. satisfying but loud. not office-friendly"],"tip":"if you're unsure, start with a tactile. most people find the bump intuitive."},
+    {"heading":"switch type matters more than you think","body":"Linear, tactile, and clicky switches feel and sound completely different. If possible, try before you buy. Most cities have a keyboard meetup or a store with a tester. Online, Novelkeys and Cannonkeys sell switch testers for under \u002420.","bullets":["linear — smooth keypress with no bump, quiet (with right switches). good for gaming and fast typists","tactile — a physical bump at the actuation point. popular for typing. boba U4T and Holy Pandas are well-regarded","clicky — bump plus an audible click. satisfying but loud. not office-friendly"],"tip":"if you're unsure, start with a tactile. most people find the bump intuitive."},
     {"heading":"case material affects everything","body":"Polycarbonate cases are soft, bouncy, and translucent. Aluminum cases are rigid, heavy, and have a fuller sound. Plastic cases vary widely. For a first board, polycarbonate or plastic is fine — you'll understand case material preferences better after you've tried a few boards.","bullets":null,"tip":null},
-    {"heading":"where to start — specific recommendations","body":null,"bullets":["$50–80: Keychron C3 Pro or Akko 5075B — good entry-level tray mount boards","$80–130: Keychron V series — gasket mount, hot swap, QMK/VIA. the best value in this range","$130–180: KBD67 Lite or Bakeneko60 — proper enthusiast gasket mount boards at reasonable prices","$180–300: Mode Sixty-Five, Zoom65 — stepping into premium territory with matching build quality"],"tip":"hot swap (no soldering required to swap switches) is highly recommended for a first board."}
+    {"heading":"where to start — specific recommendations","body":null,"bullets":["\u002450–80: Keychron C3 Pro or Akko 5075B — good entry-level tray mount boards","\u002480–130: Keychron V series — gasket mount, hot swap, QMK/VIA. the best value in this range","\u0024130–180: KBD67 Lite or Bakeneko60 — proper enthusiast gasket mount boards at reasonable prices","\u0024180–300: Mode Sixty-Five, Zoom65 — stepping into premium territory with matching build quality"],"tip":"hot swap (no soldering required to swap switches) is highly recommended for a first board."}
   ]$j$::jsonb,
   'admin','published','~10 min read',
   NOW() - INTERVAL '3 days', NOW() - INTERVAL '3 days'
@@ -250,6 +251,3 @@ VALUES (
   'admin','published','~5 min read',
   NOW() - INTERVAL '10 days', NOW() - INTERVAL '10 days'
 ) ON CONFLICT (slug) DO NOTHING;
-
-END;
-$seed$;
