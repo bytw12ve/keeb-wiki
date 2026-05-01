@@ -74,3 +74,34 @@ Production: Vercel. Supabase Storage bucket for build photos: `build-photos` (pu
 - Wiki article TOC uses `IntersectionObserver` with `rootMargin: '-10% 0px -70% 0px'` to track the active section as the user scrolls.
 - Reading progress bar on wiki articles is a `position: fixed; top: 0` lavender bar, 2px tall, `width` driven by scroll percentage.
 - Git commits in this environment require `git -c commit.gpgsign=false commit` due to a missing signing server.
+
+## Session Rules — Always Follow These
+
+### Before Every Task
+1. Read claude.md fully before doing anything
+2. Create a detailed plan with a checklist
+3. List every file that will be changed
+4. Be 95% confident the approach is correct before executing
+5. Do not write any code until the plan is solid
+
+### During Every Task
+- Execute one fix at a time
+- Check it works before moving to the next item
+- Tick off checklist items as completed
+- If something is unclear — stop and think, don't guess
+- If confidence drops below 95% — stop and re-plan
+
+### Never Do These
+- Never write code before planning
+- Never change multiple things at once
+- Never assume something works — verify it
+- Never break existing working features
+- Never change colors, fonts, or design tokens
+- Never add a max-width wrapper to the page element
+
+### If Something Goes Wrong
+- Stop immediately
+- Do not try to fix it in place
+- Re-read claude.md
+- Re-plan the approach
+- Execute the corrected plan cleanly
