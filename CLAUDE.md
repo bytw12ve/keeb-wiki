@@ -111,3 +111,37 @@ Production: Vercel. Supabase Storage bucket for build photos: `build-photos` (pu
 - Re-read claude.md
 - Re-plan the approach
 - Execute the corrected plan cleanly
+
+## Current Phase — Phase 1 (Active)
+Fix existing pages before adding new features.
+
+### Phase 1 Checklist
+- [ ] Remove bottom "back to wiki" button — keep top one only
+- [ ] Fix duplicate filter tags on wiki article pages
+- [ ] Fix photo gallery on build detail — implement lightbox/carousel 
+      so clicking a photo opens it fullscreen and user can click through
+- [ ] Remove "6 placeholder photos" and "click to expand" placeholder text
+- [ ] Fix sound & feel profile card color to lavender #2D1F4A / #B8A9E0
+      to match build specs and builder's notes cards
+- [ ] Fix footer — remove RSS link, make About link go to /about or remove it
+- [ ] Fix Supabase security warnings in dashboard — check RLS policies
+- [ ] Set file size limits — 5MB max per photo, 10MB max per audio file
+- [ ] Add hidden 12. watermark comment in main source files
+      /* built by twelve. — bytw12ve */
+
+### Phase 2 Checklist (upcoming)
+- [ ] User auth — sign up, log in, log out via Supabase Auth
+- [ ] User profile page — see own builds and comments
+- [ ] Edit and delete own posts
+- [ ] Comments on builds and wiki articles
+- [ ] Upvote and favorite builds
+- [ ] Custom tags when submitting wiki articles
+- [ ] Audio file upload with size limits
+
+### Phase 3 Checklist (later)
+- [ ] Admin panel with staff permissions
+- [ ] Homepage background visual upgrade
+- [ ] More homepage sections
+- [ ] Contact page
+- [ ] Suggestions page
+- [ ] Full build photo gallery polish
