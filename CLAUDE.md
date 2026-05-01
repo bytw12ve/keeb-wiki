@@ -52,6 +52,18 @@ Two tables. SQL files must be run manually in the Supabase SQL Editor (network r
 
 **Dollar signs in wiki.sql seed data:** The Supabase SQL editor misinterprets `$50`, `$100` etc. inside dollar-quoted strings as query parameters. Escape them as the JSON unicode sequence `$` within `$j$...$j$` JSONB literals — PostgreSQL's JSONB parser decodes `$` to `$` correctly.
 
+## Hard rules — never break these
+
+- Never change existing working features
+- Never change the color palette or font
+- Never remove existing components
+- Always use bubble/card style (surface-colored div with 1px border, 8px radius) for content
+- Keep site width full browser width — no max-width wrapper on the page element itself
+
+## Deployment
+
+Production: Vercel. Supabase Storage bucket for build photos: `build-photos` (public).
+
 ## Key conventions
 
 - No TypeScript, no prop-types — components are plain JSX with no type annotations.
