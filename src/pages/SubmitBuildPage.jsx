@@ -9,13 +9,14 @@ import { supabase } from '../lib/supabase.js'
 /* built by twelve. — bytw12ve */
 
 const MAX_PHOTO_SIZE = 5 * 1024 * 1024
-const MAX_AUDIO_SIZE = 10 * 1024 * 1024
 const LAYOUTS = ['40%','60%','65%','75%','TKL','WKL','Full']
 const MATERIALS = ['Aluminum','Polycarbonate','Steel','Brass','Carbon Fiber','POM','Acrylic']
 const PLATES = ['Aluminum','Brass','Polycarbonate','FR4','Carbon Fiber','POM','PE','Copper']
+const SWITCH_TYPES = ['linear','tactile','clicky']
 const SOUND_SIGS = ['thocky','clacky','muted','poppy','creamy']
 const TYPING_FEELS = ['smooth','light','heavy','fast','bouncy']
 const SOUND_LEVELS = ['quiet','medium','loud']
+const PHOTO_TYPES = ['image/jpeg','image/png','image/webp','image/gif']
 
 function FormSection({ title, children }) {
   return (
@@ -147,7 +148,7 @@ export default function SubmitBuildPage() {
 
   const [form, setForm] = useState({
     name: '', layout: '', case_material: '', case_color: '',
-    plate: '', switches: '', keycaps: '', mods: '',
+    plate: '', switches: '', switch_type: '', keycaps: '', mods: '',
     lubed: false, lube_type: '', filmed: false, film_brand: '',
     sound_signature: [], typing_feel: [], sound_level: '',
     builder_notes: '', rating: null, submitted_by: '',
@@ -158,6 +159,10 @@ export default function SubmitBuildPage() {
   const toggleArr = (k, v) => setForm(f => ({ ...f, [k]: f[k].includes(v) ? f[k].filter(x => x !== v) : [...f[k], v] }))
 
   const addPhoto = (file, idx) => {
+    if (!PHOTO_TYPES.includes(file.type)) {
+      setError('photos must be jpg, png, webp, or gif.')
+      return
+    }
     if (file.size > MAX_PHOTO_SIZE) {
       setError('photos must be 5MB or smaller.')
       return
@@ -171,34 +176,57 @@ export default function SubmitBuildPage() {
   const photoCount = photos.filter(Boolean).length
 
   const handleSubmit = async () => {
-    if (!form.name) return
+    if (submitting) return
+    if (!form.name.trim()) {
+      setError('keyboard name is required.')
+      return
+    }
+    if (!form.switch_type) {
+      setError('switch type is required for filtering.')
+      return
+    }
+    if (photos.some(photo => photo && !PHOTO_TYPES.includes(photo.file.type))) {
+      setError('photos must be jpg, png, webp, or gif.')
+      return
+    }
     if (photos.some(photo => photo?.file?.size > MAX_PHOTO_SIZE)) {
       setError('photos must be 5MB or smaller.')
       return
     }
     setSubmitting(true)
     setError('')
+    const uploadedPaths = []
     try {
       const photoUrls = []
       for (const photo of photos) {
         if (!photo) continue
-        const ext = photo.file.name.split('.').pop()
+        const ext = photo.file.name.split('.').pop().toLowerCase()
         const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
-        const { data: up } = await supabase.storage.from('build-photos').upload(path, photo.file, { upsert: true })
+        const { data: up, error: uploadError } = await supabase.storage.from('build-photos').upload(path, photo.file, {
+          contentType: photo.file.type,
+          upsert: false,
+        })
+        if (uploadError) throw uploadError
+        uploadedPaths.push(path)
         if (up) {
           const { data: url } = supabase.storage.from('build-photos').getPublicUrl(path)
           if (url) photoUrls.push(url.publicUrl)
         }
       }
 
-      await supabase.from('builds').insert({
-        ...form,
+      const payload = {
+        ...Object.fromEntries(Object.entries(form).map(([k, v]) => [k, typeof v === 'string' ? v.trim() : v])),
         photos: photoUrls,
-        switch_type: form.sound_signature.length > 0 ? null : null,
-      })
+        switch_type: form.switch_type,
+      }
+      const { error: insertError } = await supabase.from('builds').insert(payload)
+      if (insertError) throw insertError
       setSuccess(true)
     } catch (e) {
       console.error(e)
+      if (uploadedPaths.length > 0) {
+        await supabase.storage.from('build-photos').remove(uploadedPaths)
+      }
       setError('something went wrong submitting this build.')
     }
     setSubmitting(false)
@@ -219,7 +247,7 @@ export default function SubmitBuildPage() {
   return (
     <div style={{ background: KW.bg, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Nav />
-      <div style={{ flex: 1, padding: '32px 40px 40px', maxWidth: 860, width: '100%' }}>
+      <div style={{ flex: 1, padding: '32px var(--kw-page-x) 40px', maxWidth: 860, width: '100%' }}>
         <h1 style={{ font: '700 28px/1 var(--kw-mono)', color: KW.text, margin: '0 0 6px' }}>submit your build.</h1>
         <p style={{ font: '400 12px var(--kw-mono)', color: KW.text3, margin: '0 0 28px' }}>
           document your build and add it to the archive. fill in as much as you can.
@@ -231,17 +259,18 @@ export default function SubmitBuildPage() {
             <Field label="keyboard name">
               <TextInput value={form.name} onChange={v => set('name', v)} placeholder="e.g. Satisfaction75" />
             </Field>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'var(--kw-grid-form)', gap: 12 }}>
               <Field label="layout"><SelectInput value={form.layout} onChange={v => set('layout', v)} options={LAYOUTS} placeholder="select layout" /></Field>
               <Field label="case color"><TextInput value={form.case_color} onChange={v => set('case_color', v)} placeholder="e.g. Iced Silver" /></Field>
               <Field label="case material"><SelectInput value={form.case_material} onChange={v => set('case_material', v)} options={MATERIALS} placeholder="select material" /></Field>
               <Field label="plate material"><SelectInput value={form.plate} onChange={v => set('plate', v)} options={PLATES} placeholder="select plate" /></Field>
               <Field label="switches"><TextInput value={form.switches} onChange={v => set('switches', v)} placeholder="e.g. Gateron Yellow" /></Field>
+              <Field label="switch type"><SelectInput value={form.switch_type} onChange={v => set('switch_type', v)} options={SWITCH_TYPES} placeholder="select switch type" /></Field>
               <Field label="keycaps"><TextInput value={form.keycaps} onChange={v => set('keycaps', v)} placeholder="e.g. GMK Olivia" /></Field>
               <Field label="mods"><TextInput value={form.mods} onChange={v => set('mods', v)} placeholder="e.g. tape mod, PE foam" /></Field>
               <Field label="submitted by"><TextInput value={form.submitted_by} onChange={v => set('submitted_by', v)} placeholder="your username" /></Field>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'var(--kw-grid-form)', gap: 12 }}>
               <Field label="lubed?">
                 <Toggle checked={form.lubed} onChange={v => set('lubed', v)} />
                 {form.lubed && <TextInput value={form.lube_type} onChange={v => set('lube_type', v)} placeholder="e.g. Krytox 205g0" style={{ marginTop: 6 }} />}
@@ -265,14 +294,6 @@ export default function SubmitBuildPage() {
             </Field>
             <Field label="sound level">
               <MultiToggle options={SOUND_LEVELS} selected={form.sound_level} onToggle={v => set('sound_level', v)} single />
-            </Field>
-            <Field label="sound test (optional)">
-              <div style={{ height: 54, background: KW.surface2, border: `1px solid ${KW.surface3}`, borderRadius: 6, display: 'flex', alignItems: 'center', gap: 12, padding: '0 16px' }}>
-                <div style={{ display: 'flex', gap: 3 }}>
-                  {[4,6,8,5,7,4,6].map((h, i) => <div key={i} style={{ width: 3, height: h, background: KW.text4, borderRadius: 2 }} />)}
-                </div>
-                <span style={{ font: '400 10px var(--kw-mono)', color: KW.text4 }}>sound tests support mp3/wav up to {MAX_AUDIO_SIZE / 1024 / 1024}MB or a youtube link</span>
-              </div>
             </Field>
           </div>
         </FormSection>
@@ -299,11 +320,11 @@ export default function SubmitBuildPage() {
 
         {/* Photos */}
         <FormSection title="photos.">
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10, marginBottom: 10 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'var(--kw-grid-photos)', gap: 10, marginBottom: 10 }}>
             {photos.map((p, i) => <PhotoSlot key={i} photo={p} index={i} onAdd={addPhoto} onRemove={removePhoto} />)}
           </div>
           <div style={{ font: '400 10px var(--kw-mono)', color: KW.text4, textAlign: 'right' }}>
-            {photoCount} / 6 photos added · 5MB max each
+            {photoCount} / 6 photos added · jpg, png, webp, or gif · 5MB max each
           </div>
         </FormSection>
 
@@ -314,10 +335,7 @@ export default function SubmitBuildPage() {
           </div>
         )}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, paddingTop: 8 }}>
-          <button style={{ height: 33, padding: '0 18px', borderRadius: 6, background: 'transparent', border: `1px solid ${KW.surface3}`, color: KW.text3, font: '400 11px var(--kw-mono)', cursor: 'pointer' }}>
-            save draft
-          </button>
-          <Button onClick={handleSubmit} style={{ opacity: submitting ? .6 : 1 }}>
+          <Button onClick={handleSubmit} disabled={submitting}>
             {submitting ? 'submitting...' : 'submit build →'}
           </Button>
         </div>

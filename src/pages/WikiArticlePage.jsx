@@ -164,7 +164,7 @@ export default function WikiArticlePage() {
 
       <Nav />
 
-      <div style={{ flex: 1, padding: '24px 40px 40px', display: 'grid', gridTemplateColumns: '1fr 260px', gap: 32, alignItems: 'start' }}>
+      <div style={{ flex: 1, padding: '24px var(--kw-page-x) 40px', display: 'grid', gridTemplateColumns: 'var(--kw-grid-article)', gap: 32, alignItems: 'start' }}>
         {/* Main content */}
         <div>
           <button

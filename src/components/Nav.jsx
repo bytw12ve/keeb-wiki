@@ -23,10 +23,10 @@ export default function Nav() {
 
   return (
     <div style={{
-      height: 44, background: KW.surface,
+      minHeight: 44, background: KW.surface,
       borderBottom: `1px solid ${KW.border}`,
       display: "flex", alignItems: "center", justifyContent: "space-between",
-      padding: "0 24px", flexShrink: 0,
+      padding: "8px 24px", flexShrink: 0, gap: 16, flexWrap: "wrap",
     }}>
       <a
         href="/"
@@ -38,7 +38,7 @@ export default function Nav() {
           the keyboard build archive
         </span>
       </a>
-      <div style={{ display: "flex", gap: 24 }}>
+      <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
         {LINKS.map(({ key, label, path }) => {
           const isActive = activeKey === key;
           return (

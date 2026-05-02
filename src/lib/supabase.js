@@ -42,27 +42,36 @@ export function getBuildTags(build) {
   return tags
 }
 
+function cleanSearchTerm(value) {
+  return String(value || '')
+    .trim()
+    .replace(/[,%()*]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .slice(0, 80)
+}
+
 export async function fetchBuilds({ q = '', filter = 'all' } = {}) {
   let query = supabase.from('builds').select('*').order('created_at', { ascending: false })
+  const search = cleanSearchTerm(q)
 
-  if (q) {
-    query = query.or(`name.ilike.%${q}%,switches.ilike.%${q}%,layout.ilike.%${q}%`)
+  if (search) {
+    query = query.or(`name.ilike.%${search}%,switches.ilike.%${search}%,layout.ilike.%${search}%`)
   }
 
   if (filter && filter !== 'all') {
     const layoutFilters = ['60%','65%','75%','tkl','wkl','full','40%']
     const materialFilters = ['brass','aluminum','polycarbonate','steel','carbon fiber','pom']
     const switchTypeFilters = ['linear','tactile','clicky']
-    const f = filter.toLowerCase()
+    const f = cleanSearchTerm(filter).toLowerCase()
 
     if (switchTypeFilters.includes(f)) {
       query = query.eq('switch_type', f)
     } else if (layoutFilters.some(l => f === l.replace('%','')||f===l)) {
-      query = query.ilike('layout', `%${filter}%`)
+      query = query.ilike('layout', `%${f}%`)
     } else if (materialFilters.includes(f)) {
-      query = query.ilike('case_material', `%${filter}%`)
+      query = query.ilike('case_material', `%${f}%`)
     } else {
-      query = query.ilike('layout', `%${filter}%`)
+      query = query.ilike('layout', `%${f}%`)
     }
   }
 
@@ -71,11 +80,13 @@ export async function fetchBuilds({ q = '', filter = 'all' } = {}) {
 }
 
 export async function fetchBuildBySlug(slug) {
-  const nameGuess = slug.replace(/-/g, ' ')
+  const safeSlug = String(slug || '').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 120)
+  if (!safeSlug) return { data: null, error: new Error('Invalid build slug') }
+  const nameGuess = safeSlug.replace(/-/g, ' ')
   const { data, error } = await supabase
     .from('builds')
     .select('*')
-    .or(`slug.eq.${slug},name.ilike.${nameGuess}`)
+    .or(`slug.eq.${safeSlug},name.ilike.${nameGuess}`)
     .limit(1)
     .single()
   return { data, error }
@@ -105,26 +116,31 @@ export async function fetchWikiArticles({ category, status = 'published', limit 
 }
 
 export async function fetchWikiArticleBySlug(slug) {
+  const safeSlug = String(slug || '').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 120)
+  if (!safeSlug) return { data: null, error: new Error('Invalid article slug') }
   const { data, error } = await supabase
     .from('wiki_articles')
     .select('*')
-    .eq('slug', slug)
+    .eq('slug', safeSlug)
     .single()
   return { data, error }
 }
 
 export async function searchWikiArticles(q) {
+  const search = cleanSearchTerm(q)
+  if (!search) return { data: [], error: null }
   const { data, error } = await supabase
     .from('wiki_articles')
     .select('*')
     .eq('status', 'published')
-    .or(`title.ilike.%${q}%,short_description.ilike.%${q}%`)
+    .or(`title.ilike.%${search}%,short_description.ilike.%${search}%`)
     .order('updated_at', { ascending: false })
   return { data: data || [], error }
 }
 
 export async function submitWikiArticle({ title, category, description, tags, format, sections, combined }) {
   const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+  const uniqueTags = [...new Set((tags || []).map(t => String(t).trim().toLowerCase()).filter(Boolean))]
   const { data, error } = await supabase
     .from('wiki_articles')
     .insert({
@@ -132,10 +148,12 @@ export async function submitWikiArticle({ title, category, description, tags, fo
       title,
       category: CATEGORY_SLUG_MAP[category] || category,
       short_description: description,
-      tags,
+      tags: uniqueTags,
       format,
       content: format === 'sections'
-        ? sections.filter(s => s.heading || s.content).map(s => ({ heading: s.heading, body: s.content }))
+        ? sections
+            .map(s => ({ heading: s.heading.trim(), body: s.content.trim() }))
+            .filter(s => s.heading || s.body)
         : null,
       combined_content: format === 'combined' ? combined : null,
       status: 'pending',

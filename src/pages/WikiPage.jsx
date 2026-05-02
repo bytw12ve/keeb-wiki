@@ -249,7 +249,7 @@ export default function WikiPage() {
       <Nav />
 
       {/* Hero */}
-      <div style={{ padding: '56px 40px 48px', textAlign: 'center', borderBottom: `1px solid ${KW.border}` }}>
+      <div style={{ padding: '56px var(--kw-page-x) 48px', textAlign: 'center', borderBottom: `1px solid ${KW.border}` }}>
         <div style={{ font: '700 9px var(--kw-mono)', color: KW.lavender, letterSpacing: '.24em', textTransform: 'uppercase', marginBottom: 16 }}>
           knowledge base
         </div>
@@ -259,7 +259,7 @@ export default function WikiPage() {
         <div style={{ font: '400 13px/1.5 var(--kw-mono)', color: KW.text3, maxWidth: 560, margin: '0 auto 28px' }}>
           guides, glossaries, and everything you need to know about mechanical keyboards.
         </div>
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', maxWidth: 520, margin: '0 auto' }}>
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', maxWidth: 520, margin: '0 auto', flexWrap: 'wrap' }}>
           <Input
             style={{ flex: 1, height: 36 }}
             placeholder="search the wiki..."
@@ -277,7 +277,7 @@ export default function WikiPage() {
         )}
       </div>
 
-      <div style={{ flex: 1, padding: '36px 40px 40px' }}>
+      <div style={{ flex: 1, padding: '36px var(--kw-page-x) 40px' }}>
         {searchQ ? (
           <>
             <div style={{ font: '700 11px var(--kw-mono)', color: KW.text, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 16 }}>
@@ -327,7 +327,7 @@ export default function WikiPage() {
             <div style={{ font: '700 11px var(--kw-mono)', color: KW.text, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 16 }}>
               browse by section
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 40 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'var(--kw-grid-wiki-sections)', gap: 12, marginBottom: 40 }}>
               {SECTIONS.map(s => (
                 <SectionCard key={s.key} s={s} onClick={() => setSearchParams({ category: s.dbKey })} />
               ))}

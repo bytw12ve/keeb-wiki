@@ -49,10 +49,10 @@ function GridBuildCard({ b, onClick }) {
 function SortButton({ value, onClick }) {
   const [hover, setHover] = useState(false)
   return (
-    <button onClick={onClick} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} style={{
+    <button onClick={onClick} disabled={!onClick} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} style={{
       height: 36, padding: '0 14px', borderRadius: 6, background: KW.surface2,
-      border: `1px solid ${hover ? KW.lavender : KW.surface3}`, color: hover ? KW.text : KW.text3,
-      font: '400 11px var(--kw-mono)', cursor: 'pointer',
+      border: `1px solid ${hover && onClick ? KW.lavender : KW.surface3}`, color: hover && onClick ? KW.text : KW.text3,
+      font: '400 11px var(--kw-mono)', cursor: onClick ? 'pointer' : 'default',
       display: 'inline-flex', alignItems: 'center', gap: 8,
       transition: 'all .18s', whiteSpace: 'nowrap',
     }}>
@@ -80,7 +80,7 @@ function PageButton({ children, active, onClick, disabled }) {
 const PAGE_SIZE = 15
 
 export default function BuildsPage() {
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const navigate = useNavigate()
 
   const [q, setQ] = useState(searchParams.get('q') || '')
@@ -98,13 +98,22 @@ export default function BuildsPage() {
     })
   }, [q, filter])
 
+  useEffect(() => {
+    const next = {}
+    if (q.trim()) next.q = q.trim()
+    if (filter !== 'all') next.filter = filter
+    setSearchParams(next, { replace: true })
+  }, [q, filter, setSearchParams])
+
   const paged = builds.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
   const totalPages = Math.max(1, Math.ceil(builds.length / PAGE_SIZE))
+  const firstResult = builds.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1
+  const lastResult = Math.min(page * PAGE_SIZE, builds.length)
 
   return (
     <div style={{ background: KW.bg, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Nav />
-      <div style={{ flex: 1, padding: '32px 40px 40px' }}>
+      <div style={{ flex: 1, padding: '32px var(--kw-page-x) 40px' }}>
         {/* Header */}
         <div style={{ marginBottom: 22 }}>
           <div style={{ font: '700 9px var(--kw-mono)', color: KW.lavender, letterSpacing: '.24em', textTransform: 'uppercase', marginBottom: 8 }}>
@@ -118,7 +127,7 @@ export default function BuildsPage() {
         </div>
 
         {/* Search row */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
           <Input style={{ flex: 1, height: 36 }} placeholder="search builds, switches, layouts..."
             value={q} onChange={setQ} onKeyDown={(e) => { if (e.key === 'Enter') setPage(1) }} />
           <Button onClick={() => setPage(1)} style={{ height: 36 }}>search</Button>
@@ -135,14 +144,14 @@ export default function BuildsPage() {
         {/* Result meta */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, font: '400 10px var(--kw-mono)', color: KW.text3 }}>
           <span>
-            {loading ? 'loading...' : <>showing <span style={{ color: KW.text }}>{(page-1)*PAGE_SIZE+1}–{Math.min(page*PAGE_SIZE, builds.length)}</span> of <span style={{ color: KW.text }}>{builds.length}</span></>}
+            {loading ? 'loading...' : <>showing <span style={{ color: KW.text }}>{firstResult}–{lastResult}</span> of <span style={{ color: KW.text }}>{builds.length}</span></>}
             {filter !== 'all' && !loading && <span> · filtered by <span style={{ color: KW.lavender }}>{filter}</span></span>}
           </span>
           <span>page {page} of {totalPages}</span>
         </div>
 
         {/* Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10, marginBottom: 32, minHeight: 200 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'var(--kw-grid-builds)', gap: 10, marginBottom: 32, minHeight: 200 }}>
           {loading
             ? Array(10).fill(0).map((_, i) => <div key={i} style={{ height: 220, background: KW.surface, borderRadius: 8, border: `1px solid ${KW.border}` }} />)
             : paged.map((b, i) => (
@@ -159,7 +168,7 @@ export default function BuildsPage() {
           ))}
           {totalPages > 5 && <><span style={{ color: KW.text4, font: '400 11px var(--kw-mono)', padding: '0 4px' }}>…</span>
             <PageButton onClick={() => setPage(totalPages)}>{totalPages}</PageButton></>}
-          <PageButton onClick={() => setPage(p => Math.min(totalPages, p+1))}>next →</PageButton>
+          <PageButton onClick={() => setPage(p => Math.min(totalPages, p+1))} disabled={page === totalPages}>next →</PageButton>
         </div>
       </div>
       <Footer />

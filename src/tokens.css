@@ -58,6 +58,17 @@
   --kw-r-pill:       20px;
 
   --kw-mono: "Anonymous Pro", "JetBrains Mono", "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --kw-page-x: 40px;
+  --kw-grid-builds: repeat(auto-fill, minmax(180px, 1fr));
+  --kw-grid-featured: repeat(2, minmax(0, 1fr));
+  --kw-grid-wiki-feature: minmax(0, 1.1fr) minmax(280px, 1fr);
+  --kw-grid-cta: 1fr auto;
+  --kw-grid-form: repeat(2, minmax(0, 1fr));
+  --kw-grid-photos: repeat(3, minmax(0, 1fr));
+  --kw-grid-details: repeat(3, minmax(0, 1fr));
+  --kw-grid-wiki-sections: repeat(3, minmax(0, 1fr));
+  --kw-grid-article: minmax(0, 1fr) 260px;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -74,3 +85,25 @@ html, body {
 button { font-family: var(--kw-mono); }
 
 ::selection { background: #B8A9E0; color: #1E1B2E; }
+
+@media (max-width: 900px) {
+  :root {
+    --kw-page-x: 24px;
+    --kw-grid-featured: 1fr;
+    --kw-grid-wiki-feature: 1fr;
+    --kw-grid-cta: 1fr;
+    --kw-grid-details: 1fr;
+    --kw-grid-wiki-sections: repeat(2, minmax(0, 1fr));
+    --kw-grid-article: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  :root {
+    --kw-page-x: 16px;
+    --kw-grid-builds: 1fr;
+    --kw-grid-form: 1fr;
+    --kw-grid-photos: repeat(2, minmax(0, 1fr));
+    --kw-grid-wiki-sections: 1fr;
+  }
+}

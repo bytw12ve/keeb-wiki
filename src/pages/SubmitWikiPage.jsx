@@ -105,6 +105,7 @@ export default function SubmitWikiPage() {
   const [form, setForm] = useState({ title: '', category: '', description: '', tags: [], format: 'sections' })
   const [sections, setSections] = useState([{ heading: '', content: '' }, { heading: '', content: '' }])
   const [combined, setCombined] = useState('')
+  const [customTag, setCustomTag] = useState('')
   const [success, setSuccess] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
@@ -115,19 +116,40 @@ export default function SubmitWikiPage() {
   const addSection = () => setSections(s => [...s, { heading: '', content: '' }])
   const removeSection = (i) => setSections(s => s.filter((_, idx) => idx !== i))
   const updateSection = (i, val) => setSections(s => { const next = [...s]; next[i] = val; return next })
+  const addCustomTag = () => {
+    const tag = customTag.trim().toLowerCase().replace(/\s+/g, ' ').slice(0, 32)
+    if (!tag) return
+    setForm(f => f.tags.some(t => t.toLowerCase() === tag)
+      ? f
+      : { ...f, tags: [...f.tags, tag] })
+    setCustomTag('')
+  }
 
   const handleSubmit = async () => {
-    if (!form.title.trim() || !form.category) return
+    if (submitting) return
+    if (!form.title.trim() || !form.category) {
+      setError('title and category are required.')
+      return
+    }
+    const hasSections = sections.some(s => s.heading.trim() || s.content.trim())
+    if (form.format === 'sections' && !hasSections) {
+      setError('add at least one section before submitting.')
+      return
+    }
+    if (form.format === 'combined' && !combined.trim()) {
+      setError('article content is required.')
+      return
+    }
     setSubmitting(true)
     setError(null)
     const { error: err } = await submitWikiArticle({
-      title: form.title,
+      title: form.title.trim(),
       category: form.category,
-      description: form.description,
+      description: form.description.trim(),
       tags: form.tags,
       format: form.format,
       sections,
-      combined,
+      combined: combined.trim(),
     })
     setSubmitting(false)
     if (err) {
@@ -152,7 +174,7 @@ export default function SubmitWikiPage() {
   return (
     <div style={{ background: KW.bg, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Nav />
-      <div style={{ flex: 1, padding: '32px 40px 40px', maxWidth: 860, width: '100%' }}>
+      <div style={{ flex: 1, padding: '32px var(--kw-page-x) 40px', maxWidth: 860, width: '100%' }}>
         <h1 style={{ font: '700 28px/1 var(--kw-mono)', color: KW.text, margin: '0 0 6px' }}>submit a wiki article.</h1>
         <p style={{ font: '400 12px var(--kw-mono)', color: KW.text3, margin: '0 0 28px' }}>
           share your knowledge with the community. articles are reviewed before going live.
@@ -161,7 +183,7 @@ export default function SubmitWikiPage() {
         {/* Article info */}
         <FormSection title="article info.">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'var(--kw-grid-form)', gap: 12 }}>
               <Field label="article title">
                 <TextInput value={form.title} onChange={v => set('title', v)} placeholder="e.g. how to lube switches" />
               </Field>
@@ -177,6 +199,20 @@ export default function SubmitWikiPage() {
                 {TAGS.map(t => (
                   <TagPill key={t} label={t} active={form.tags.includes(t)} onClick={() => toggleTag(t)} />
                 ))}
+              </div>
+              <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                <TextInput
+                  value={customTag}
+                  onChange={setCustomTag}
+                  placeholder="add a custom tag"
+                  style={{ flex: 1 }}
+                />
+                <button
+                  onClick={addCustomTag}
+                  style={{ height: 33, padding: '0 14px', borderRadius: 6, border: `1px solid ${KW.surface3}`, background: KW.surface2, color: KW.text3, font: '400 10px var(--kw-mono)', cursor: 'pointer' }}
+                >
+                  add tag
+                </button>
               </div>
             </Field>
           </div>
@@ -232,9 +268,6 @@ export default function SubmitWikiPage() {
           <div style={{ font: '400 10px var(--kw-mono)', color: '#f87171', textAlign: 'right', marginBottom: 8 }}>{error}</div>
         )}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-          <button style={{ height: 33, padding: '0 18px', borderRadius: 6, background: 'transparent', border: `1px solid ${KW.surface3}`, color: KW.text3, font: '400 11px var(--kw-mono)', cursor: 'pointer' }}>
-            save draft
-          </button>
           <Button onClick={handleSubmit} disabled={submitting}>
             {submitting ? 'submitting...' : 'submit for review →'}
           </Button>

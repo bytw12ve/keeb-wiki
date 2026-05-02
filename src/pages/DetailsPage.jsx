@@ -5,7 +5,6 @@ import Nav from '../components/Nav.jsx'
 import Footer from '../components/Footer.jsx'
 import Tag from '../components/Tag.jsx'
 import KeebArt from '../components/KeebArt.jsx'
-import Toast, { flashToast } from '../components/Toast.jsx'
 import { fetchBuildBySlug, getArt, getLayoutCode, getBuildTags } from '../lib/supabase.js'
 
 /* built by twelve. — bytw12ve */
@@ -30,24 +29,6 @@ function Bubble({ title, titleColor, children, style }) {
       {title && <div style={{ font: '700 11px var(--kw-mono)', color: titleColor || KW.lavender, marginBottom: 14, letterSpacing: '.02em' }}>{title}</div>}
       {children}
     </div>
-  )
-}
-
-function SoundTestButton({ onClick }) {
-  const [hover, setHover] = useState(false)
-  return (
-    <button onClick={onClick} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} style={{
-      width: '100%', height: 32, borderRadius: 6,
-      background: hover ? KW.surface2 : 'transparent',
-      border: `1px solid ${hover ? KW.lavender : KW.surface3}`,
-      color: hover ? KW.lavender : KW.text3,
-      font: '700 10px var(--kw-mono)', cursor: 'pointer',
-      display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-      transition: 'all .18s',
-    }}>
-      <span style={{ width: 0, height: 0, borderLeft: `6px solid ${hover ? KW.lavender : KW.text3}`, borderTop: '4px solid transparent', borderBottom: '4px solid transparent', transition: 'border-color .18s' }} />
-      youtube sound test →
-    </button>
   )
 }
 
@@ -185,7 +166,7 @@ export default function DetailsPage() {
   return (
     <div style={{ background: KW.bg, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Nav />
-      <div style={{ flex: 1, padding: '20px 40px 40px' }}>
+      <div style={{ flex: 1, padding: '20px var(--kw-page-x) 40px' }}>
         <a href="/builds" onClick={(e) => { e.preventDefault(); navigate('/builds') }} style={{
           font: '400 10px var(--kw-mono)', color: KW.text3, textDecoration: 'none',
           cursor: 'pointer', transition: 'color .18s', display: 'inline-block', marginBottom: 22,
@@ -216,7 +197,7 @@ export default function DetailsPage() {
         </div>
 
         {/* 3-column cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 32 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'var(--kw-grid-details)', gap: 12, marginBottom: 32 }}>
           <Bubble title="build specs.">
             {specs.map(([k, v], i) => <SpecRow key={k} k={k} v={v} last={i === specs.length - 1} />)}
           </Bubble>
@@ -245,9 +226,6 @@ export default function DetailsPage() {
             <SoundGroup label="SOUND SIGNATURE" tags={build.sound_signature} kind="layout" />
             <SoundGroup label="TYPING FEEL" tags={build.typing_feel} kind="layout" />
             {build.sound_level && <SoundGroup label="SOUND LEVEL" tags={[build.sound_level]} kind="layout" />}
-            <div style={{ marginTop: 4 }}>
-              <SoundTestButton onClick={() => flashToast('→ youtube sound test')} />
-            </div>
           </Bubble>
         </div>
 
@@ -261,7 +239,7 @@ export default function DetailsPage() {
             {hasPhotos ? `${photos.length} photos` : 'procedural previews'}
           </span>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'var(--kw-grid-photos)', gap: 10 }}>
           {galleryItems.map((item, i) => (
             typeof item === 'string' && item.startsWith('http')
               ? <button key={i} onClick={() => setLightboxIndex(i)} style={{ paddingTop: '75%', position: 'relative', borderRadius: 6, overflow: 'hidden', border: 'none', background: 'transparent', cursor: 'zoom-in' }}>
@@ -281,7 +259,6 @@ export default function DetailsPage() {
         onSelect={setLightboxIndex}
       />
       <Footer />
-      <Toast />
     </div>
   )
 }
