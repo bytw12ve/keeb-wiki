@@ -1,25 +1,33 @@
-# CODING AGENTS: READ THIS FIRST
+# Keeb.wiki
 
-This is a **handoff bundle** from Claude Design (claude.ai/design).
+A community hub for mechanical keyboard enthusiasts — browse and share keyboard builds, and explore a wiki covering everything from beginner guides to advanced modding.
 
-A user mocked up designs in HTML/CSS/JS using an AI design tool, then exported this bundle so a coding agent can implement the designs for real.
+Live at [keebwiki.com](https://keebwiki.com).
 
-## What you should do — IMPORTANT
+## What it is
 
-**Read the chat transcripts first.** There are 1 chat transcript(s) in `chats/`. The transcripts show the full back-and-forth between the user and the design assistant — they tell you **what the user actually wants** and **where they landed** after iterating. Don't skip them. The final HTML files are the output, but the chat is where the intent lives.
+**Build showcase** — Users can submit photos and specs of their custom keyboard builds. Builds are browsable by layout, switch type, and case material, with a staff-curated featured section on the homepage.
 
-**Find the primary design file under `project/` and read it top to bottom.** The chat transcripts will tell you which file the user was last iterating on. Then **follow its imports**: open every file it pulls in (shared components, CSS, scripts) so you understand how the pieces fit together before you start implementing.
+**Wiki** — A growing knowledge base organized into categories: beginner guides, modding guides, parts glossary, sound & feel, and community buying tips. Articles are searchable and user-submittable.
 
-**If anything is ambiguous, ask the user to confirm before you start implementing.** It's much cheaper to clarify scope up front than to build the wrong thing.
+**Accounts** — Email and Google login. Logged-in users can submit builds and wiki articles, edit their own content, and track pending/published status from their profile.
 
-## About the design files
+## Features
 
-The design medium is **HTML/CSS/JS** — these are prototypes, not production code. Your job is to **recreate them pixel-perfectly** in whatever technology makes sense for the target codebase (React, Vue, native, whatever fits). Match the visual output; don't copy the prototype's internal structure unless it happens to fit.
+- Build browsing with search and filter (layout, switches, case material)
+- Photo uploads for builds with lightbox gallery
+- Procedural keyboard art fallback when no photo is uploaded
+- Wiki articles by category with table of contents and reading progress
+- User submissions with a moderation workflow (pending → published)
+- Staff picks for homepage featured builds
+- Soft delete and edit for own content
 
-**Don't render these files in a browser or take screenshots unless the user asks you to.** Everything you need — dimensions, colors, layout rules — is spelled out in the source. Read the HTML and CSS directly; a screenshot won't tell you anything they don't.
+## Tech
 
-## Bundle contents
+- Vite + React 18
+- React Router v6
+- Supabase (PostgreSQL, auth, storage)
 
-- `README.md` — this file
-- `chats/` — conversation transcripts (read these!)
-- `project/` — the `Keeb.wiki` project files (HTML prototypes, assets, components)
+## Status
+
+Actively in development.
