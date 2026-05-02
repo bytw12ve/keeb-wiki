@@ -122,6 +122,9 @@ Supabase SQL editor note:
 - `src/components/KeebArt.jsx` renders procedural keyboard art. It accepts `palette`, `layout`, and `seed`.
 - `src/components/Tag.jsx` uses `tagKind()` and `TINT` for colored tag pills.
 - Active nav link detection uses `useLocation()` with `startsWith` checks.
+- Signed-in nav should use one far-right `logged in as {username}.` account control; do not also show a separate `profile.` nav link.
+- The signed-in account control should click through to `/profile` and expose `profile.` plus `logout.` from a compact hover/focus bubble.
+- Usernames are created during signup but should not be self-editable from `/profile` in Phase 2.1.
 - Wiki search state uses `useSearchParams`, so `?q=...` is shareable.
 - Wiki category browsing uses `?category=...`.
 - Wiki article TOC uses `IntersectionObserver`.
@@ -168,6 +171,13 @@ Supabase SQL editor note:
 - [x] Re-run logged-in QA with email confirmation temporarily disabled.
 - [x] Create a test account, submit a test build, submit a test wiki article, edit owned content, and confirm public visibility rules.
 - [x] Update docs for the current Phase 2 foundation.
+- [ ] Update signed-in nav so `logged in as {username}.` is the only profile/account entry, positioned at the far right.
+- [ ] Add a hover/focus account bubble with `profile.` and `logout.` actions.
+- [ ] Remove the duplicate signed-in `profile.` nav link.
+- [ ] Remove username self-editing from `/profile`; show username/email as read-only account info.
+- [ ] Add `view` actions to profile build/wiki rows while keeping edit and delete.
+- [ ] Allow owners to preview their own pending/rejected non-deleted builds and wiki submissions from `/profile`.
+- [ ] Keep public build/wiki browsing and search published-only.
 - [ ] Commit the current Phase 2 foundation.
 - [ ] Add Google OAuth login after QA passes.
 - [ ] Add Cloudflare Turnstile to sign up and login.
@@ -199,6 +209,9 @@ Supabase SQL editor note:
 ## Phase 3
 
 - [ ] Admin panel with staff permissions
+- [ ] Staff moderation queue for accepting, rejecting, and managing submitted builds/wiki articles.
+- [ ] Username change request flow instead of self-service username edits.
+- [ ] Logged-in community actions: upvotes, favorites, and comments.
 - [ ] Homepage background visual upgrade
 - [ ] More homepage sections
 - [ ] Contact page
