@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { KW } from '../tokens.js'
 import Nav from '../components/Nav.jsx'
 import Footer from '../components/Footer.jsx'
@@ -62,33 +62,37 @@ function GalleryTile({ palette, layout, seed, onClick }) {
 
 function Lightbox({ photos, index, buildName, onClose, onPrev, onNext, onSelect }) {
   if (index === null || !photos[index]) return null
+  const hasMultiplePhotos = photos.length > 1
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-label={`${buildName} photo gallery`}
+      onClick={onClose}
       style={{
         position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(30,27,46,.94)',
-        display: 'grid', gridTemplateRows: '48px 1fr 52px',
+        display: 'grid', gridTemplateRows: hasMultiplePhotos ? '48px 1fr 52px' : '48px 1fr',
       }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 20px', borderBottom: `1px solid ${KW.border}` }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 20px', borderBottom: `1px solid ${KW.border}` }}>
         <span style={{ font: '700 10px var(--kw-mono)', color: KW.text3 }}>{index + 1} / {photos.length}</span>
         <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: 6, border: `1px solid ${KW.surface3}`, background: KW.surface, color: KW.text2, font: '700 14px var(--kw-mono)', cursor: 'pointer' }}>×</button>
       </div>
-      <div style={{ minHeight: 0, display: 'grid', gridTemplateColumns: '56px 1fr 56px', alignItems: 'center', gap: 12, padding: 20 }}>
-        <button onClick={onPrev} style={{ height: 52, borderRadius: 8, border: `1px solid ${KW.surface3}`, background: KW.surface, color: KW.lavender, font: '700 18px var(--kw-mono)', cursor: 'pointer' }}>‹</button>
+      <div onClick={(e) => e.stopPropagation()} style={{ minHeight: 0, display: 'grid', gridTemplateColumns: hasMultiplePhotos ? '56px 1fr 56px' : '1fr', alignItems: 'center', gap: 12, padding: 20 }}>
+        {hasMultiplePhotos && <button onClick={onPrev} style={{ height: 52, borderRadius: 8, border: `1px solid ${KW.surface3}`, background: KW.surface, color: KW.lavender, font: '700 18px var(--kw-mono)', cursor: 'pointer' }}>‹</button>}
         <img src={photos[index]} alt={`${buildName} photo ${index + 1}`} style={{ width: '100%', height: '100%', objectFit: 'contain', minHeight: 0 }} />
-        <button onClick={onNext} style={{ height: 52, borderRadius: 8, border: `1px solid ${KW.surface3}`, background: KW.surface, color: KW.lavender, font: '700 18px var(--kw-mono)', cursor: 'pointer' }}>›</button>
+        {hasMultiplePhotos && <button onClick={onNext} style={{ height: 52, borderRadius: 8, border: `1px solid ${KW.surface3}`, background: KW.surface, color: KW.lavender, font: '700 18px var(--kw-mono)', cursor: 'pointer' }}>›</button>}
       </div>
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6, borderTop: `1px solid ${KW.border}` }}>
-        {photos.map((_, i) => (
-          <button key={i} onClick={() => onSelect(i)} style={{
-            width: i === index ? 18 : 6, height: 6, borderRadius: 6, border: 'none',
-            background: i === index ? KW.lavender : KW.surface3, padding: 0, cursor: 'pointer',
-          }} />
-        ))}
-      </div>
+      {hasMultiplePhotos && (
+        <div onClick={(e) => e.stopPropagation()} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6, borderTop: `1px solid ${KW.border}` }}>
+          {photos.map((_, i) => (
+            <button key={i} onClick={() => onSelect(i)} style={{
+              width: i === index ? 18 : 6, height: 6, borderRadius: 6, border: 'none',
+              background: i === index ? KW.lavender : KW.surface3, padding: 0, cursor: 'pointer',
+            }} />
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -98,6 +102,7 @@ const GALLERY_PALETTES = ['lavender','pink','blue','cream','olive','slate']
 export default function DetailsPage() {
   const { slug } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const { user, loading: authLoading } = useAuth()
   const [build, setBuild] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -118,13 +123,16 @@ export default function DetailsPage() {
 
   const photos = build?.photos?.filter(Boolean) || []
   const hasPhotos = photos.length > 0
+  const openedFromProfile = location.state?.from === 'profile'
+  const backPath = openedFromProfile ? '/profile' : '/builds'
+  const backLabel = openedFromProfile ? '← back to profile' : '← back to builds'
 
   useEffect(() => {
     if (lightboxIndex === null || !hasPhotos) return
     const onKeyDown = (e) => {
       if (e.key === 'Escape') setLightboxIndex(null)
-      if (e.key === 'ArrowLeft') setLightboxIndex(i => (i + photos.length - 1) % photos.length)
-      if (e.key === 'ArrowRight') setLightboxIndex(i => (i + 1) % photos.length)
+      if (photos.length > 1 && e.key === 'ArrowLeft') setLightboxIndex(i => (i + photos.length - 1) % photos.length)
+      if (photos.length > 1 && e.key === 'ArrowRight') setLightboxIndex(i => (i + 1) % photos.length)
     }
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
@@ -172,13 +180,13 @@ export default function DetailsPage() {
     <div style={{ background: KW.bg, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Nav />
       <div style={{ flex: 1, padding: '20px var(--kw-page-x) 40px' }}>
-        <a href="/builds" onClick={(e) => { e.preventDefault(); navigate('/builds') }} style={{
+        <a href={backPath} onClick={(e) => { e.preventDefault(); navigate(backPath) }} style={{
           font: '400 10px var(--kw-mono)', color: KW.text3, textDecoration: 'none',
           cursor: 'pointer', transition: 'color .18s', display: 'inline-block', marginBottom: 22,
         }}
         onMouseEnter={(e) => e.currentTarget.style.color = KW.text}
         onMouseLeave={(e) => e.currentTarget.style.color = KW.text3}
-        >← back to builds</a>
+        >{backLabel}</a>
 
         {/* Title row */}
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, marginBottom: 6 }}>

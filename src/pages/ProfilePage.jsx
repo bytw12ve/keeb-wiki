@@ -156,7 +156,7 @@ export default function ProfilePage() {
                   meta={`${b.layout || 'unknown layout'} · ${new Date(b.created_at).toLocaleDateString('en-US')}`}
                   status={b.status}
                   deleted={Boolean(b.deleted_at)}
-                  onView={() => navigate(`/builds/${buildRouteSlug(b)}`)}
+                  onView={() => navigate(`/builds/${buildRouteSlug(b)}`, { state: { from: 'profile' } })}
                   onEdit={() => navigate(`/builds/${buildRouteSlug(b)}/edit`)}
                   onDelete={() => setConfirmDelete({ kind: 'build', title: b.name, onConfirm: () => deleteBuild(b.id) })}
                 />

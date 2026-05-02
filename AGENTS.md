@@ -200,6 +200,34 @@ Supabase SQL editor note:
 - [x] Revoke local build photo preview URLs when removed or on submit-page unmount.
 - [x] Improve submit error messages for duplicate wiki titles and common submission failures.
 - [ ] Run `supabase/phase2_1_rls_hardening.sql` manually in the Supabase SQL Editor.
+- [x] Build owner preview links from `/profile` return back to `/profile`.
+- [x] Build photo lightbox closes when clicking the backdrop and hides gallery controls for single-photo builds.
+
+## Manual Moderation QA
+
+Until the staff moderation UI exists, approve or reject submitted builds manually in the Supabase SQL Editor.
+
+Approve a pending build:
+
+```sql
+UPDATE public.builds
+SET status = 'published',
+    updated_at = NOW()
+WHERE id = 'PASTE_BUILD_UUID_HERE'
+  AND deleted_at IS NULL;
+```
+
+Reject a pending build:
+
+```sql
+UPDATE public.builds
+SET status = 'rejected',
+    updated_at = NOW()
+WHERE id = 'PASTE_BUILD_UUID_HERE'
+  AND deleted_at IS NULL;
+```
+
+After approval, verify the owner preview banner disappears, the build appears on `/builds`, and a signed-out user can open its detail URL.
 
 ## Phase 2 QA Notes
 
