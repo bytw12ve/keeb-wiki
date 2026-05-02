@@ -199,7 +199,7 @@ function CTA({ onSubmit }) {
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'flex-end' }}>
         <Button onClick={onSubmit}>submit your build →</Button>
-        <span style={{ font: '400 10px var(--kw-mono)', color: KW.text4 }}>no account needed.</span>
+        <span style={{ font: '400 10px var(--kw-mono)', color: KW.text4 }}>login required.</span>
       </div>
     </div>
   )

@@ -5,6 +5,7 @@ import Nav from '../components/Nav.jsx'
 import Footer from '../components/Footer.jsx'
 import Button from '../components/Button.jsx'
 import { supabase } from '../lib/supabase.js'
+import { useAuth } from '../lib/auth.jsx'
 
 /* built by twelve. — bytw12ve */
 
@@ -142,6 +143,7 @@ function PhotoSlot({ photo, onAdd, onRemove, index }) {
 
 export default function SubmitBuildPage() {
   const navigate = useNavigate()
+  const { user, profile } = useAuth()
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
@@ -151,7 +153,7 @@ export default function SubmitBuildPage() {
     plate: '', switches: '', switch_type: '', keycaps: '', mods: '',
     lubed: false, lube_type: '', filmed: false, film_brand: '',
     sound_signature: [], typing_feel: [], sound_level: '',
-    builder_notes: '', rating: null, submitted_by: '',
+    builder_notes: '', rating: null,
   })
   const [photos, setPhotos] = useState(Array(6).fill(null))
 
@@ -201,7 +203,7 @@ export default function SubmitBuildPage() {
       for (const photo of photos) {
         if (!photo) continue
         const ext = photo.file.name.split('.').pop().toLowerCase()
-        const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+        const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
         const { data: up, error: uploadError } = await supabase.storage.from('build-photos').upload(path, photo.file, {
           contentType: photo.file.type,
           upsert: false,
@@ -218,6 +220,9 @@ export default function SubmitBuildPage() {
         ...Object.fromEntries(Object.entries(form).map(([k, v]) => [k, typeof v === 'string' ? v.trim() : v])),
         photos: photoUrls,
         switch_type: form.switch_type,
+        status: 'pending',
+        user_id: user.id,
+        submitted_by: profile?.username || user.email?.split('@')[0] || 'member',
       }
       const { error: insertError } = await supabase.from('builds').insert(payload)
       if (insertError) throw insertError
@@ -236,9 +241,9 @@ export default function SubmitBuildPage() {
     <div style={{ background: KW.bg, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <Nav />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, padding: 40 }}>
-        <div style={{ font: '700 22px var(--kw-mono)', color: KW.text }}>build submitted.</div>
-        <div style={{ font: '400 11px var(--kw-mono)', color: KW.text3 }}>thanks for contributing to the archive.</div>
-        <button onClick={() => navigate('/builds')} style={{ background: 'none', border: 'none', font: '400 11px var(--kw-mono)', color: KW.lavender, cursor: 'pointer' }}>view all builds →</button>
+        <div style={{ font: '700 22px var(--kw-mono)', color: KW.text }}>build submitted for review.</div>
+        <div style={{ font: '400 11px var(--kw-mono)', color: KW.text3 }}>it will show publicly after it is published.</div>
+        <button onClick={() => navigate('/profile')} style={{ background: 'none', border: 'none', font: '400 11px var(--kw-mono)', color: KW.lavender, cursor: 'pointer' }}>view your profile →</button>
       </div>
       <Footer />
     </div>
@@ -250,7 +255,7 @@ export default function SubmitBuildPage() {
       <div style={{ flex: 1, padding: '32px var(--kw-page-x) 40px', maxWidth: 860, width: '100%' }}>
         <h1 style={{ font: '700 28px/1 var(--kw-mono)', color: KW.text, margin: '0 0 6px' }}>submit your build.</h1>
         <p style={{ font: '400 12px var(--kw-mono)', color: KW.text3, margin: '0 0 28px' }}>
-          document your build and add it to the archive. fill in as much as you can.
+          document your build and send it for review. fill in as much as you can.
         </p>
 
         {/* Build specs */}
@@ -268,7 +273,6 @@ export default function SubmitBuildPage() {
               <Field label="switch type"><SelectInput value={form.switch_type} onChange={v => set('switch_type', v)} options={SWITCH_TYPES} placeholder="select switch type" /></Field>
               <Field label="keycaps"><TextInput value={form.keycaps} onChange={v => set('keycaps', v)} placeholder="e.g. GMK Olivia" /></Field>
               <Field label="mods"><TextInput value={form.mods} onChange={v => set('mods', v)} placeholder="e.g. tape mod, PE foam" /></Field>
-              <Field label="submitted by"><TextInput value={form.submitted_by} onChange={v => set('submitted_by', v)} placeholder="your username" /></Field>
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'var(--kw-grid-form)', gap: 12 }}>
               <Field label="lubed?">

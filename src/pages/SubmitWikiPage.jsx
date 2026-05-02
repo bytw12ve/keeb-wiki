@@ -6,6 +6,7 @@ import Nav from '../components/Nav.jsx'
 import Footer from '../components/Footer.jsx'
 import Button from '../components/Button.jsx'
 import { submitWikiArticle } from '../lib/supabase.js'
+import { useAuth } from '../lib/auth.jsx'
 
 const CATEGORIES = ['beginner guides','modding guides','parts glossary','sound & feel','community & buying','about']
 const TAGS = ['beginner friendly','advanced','modding','linear','tactile','clicky','sound','buying guide']
@@ -102,6 +103,7 @@ function SectionEditor({ section, index, onUpdate, onRemove, isFirst }) {
 
 export default function SubmitWikiPage() {
   const navigate = useNavigate()
+  const { user, profile } = useAuth()
   const [form, setForm] = useState({ title: '', category: '', description: '', tags: [], format: 'sections' })
   const [sections, setSections] = useState([{ heading: '', content: '' }, { heading: '', content: '' }])
   const [combined, setCombined] = useState('')
@@ -150,6 +152,8 @@ export default function SubmitWikiPage() {
       format: form.format,
       sections,
       combined: combined.trim(),
+      userId: user.id,
+      submittedBy: profile?.username || user.email?.split('@')[0] || 'member',
     })
     setSubmitting(false)
     if (err) {
@@ -165,7 +169,7 @@ export default function SubmitWikiPage() {
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
         <div style={{ font: '700 22px var(--kw-mono)', color: KW.text }}>article submitted for review.</div>
         <div style={{ font: '400 11px var(--kw-mono)', color: KW.text3 }}>we'll review it and let you know when it goes live.</div>
-        <button onClick={() => navigate('/wiki')} style={{ background: 'none', border: 'none', font: '400 11px var(--kw-mono)', color: KW.lavender, cursor: 'pointer' }}>← back to wiki</button>
+        <button onClick={() => navigate('/profile')} style={{ background: 'none', border: 'none', font: '400 11px var(--kw-mono)', color: KW.lavender, cursor: 'pointer' }}>view your profile →</button>
       </div>
       <Footer />
     </div>

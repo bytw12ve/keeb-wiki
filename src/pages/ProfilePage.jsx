@@ -1,0 +1,167 @@
+/* built by twelve. — bytw12ve */
+import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { KW } from '../tokens.js'
+import Nav from '../components/Nav.jsx'
+import Footer from '../components/Footer.jsx'
+import Button from '../components/Button.jsx'
+import { useAuth } from '../lib/auth.jsx'
+import { fetchOwnBuilds, fetchOwnWikiArticles, softDeleteOwnBuild, softDeleteOwnWikiArticle, upsertProfile, buildSlug } from '../lib/supabase.js'
+
+function StatusPill({ status, deleted }) {
+  const label = deleted ? 'deleted' : status || 'published'
+  const color = label === 'published' ? KW.green : label === 'pending' ? KW.lavender : KW.pink
+  return (
+    <span style={{
+      height: 18, padding: '0 8px', borderRadius: 20,
+      background: KW.surface2, border: `1px solid ${KW.surface3}`,
+      color, font: '700 9px var(--kw-mono)', display: 'inline-flex', alignItems: 'center',
+    }}>{label}</span>
+  )
+}
+
+function Row({ title, meta, status, deleted, onEdit, onDelete }) {
+  return (
+    <div style={{
+      background: KW.surface, border: `1px solid ${KW.border}`, borderRadius: 8,
+      padding: 14, display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'center',
+    }}>
+      <div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 5 }}>
+          <span style={{ font: '700 12px var(--kw-mono)', color: KW.text }}>{title}</span>
+          <StatusPill status={status} deleted={deleted} />
+        </div>
+        <div style={{ font: '400 10px var(--kw-mono)', color: KW.text4 }}>{meta}</div>
+      </div>
+      {!deleted && (
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={onEdit} style={{ background: 'transparent', border: `1px solid ${KW.surface3}`, color: KW.text3, height: 28, padding: '0 12px', borderRadius: 6, font: '400 10px var(--kw-mono)', cursor: 'pointer' }}>edit</button>
+          <button onClick={onDelete} style={{ background: 'transparent', border: `1px solid ${KW.surface3}`, color: KW.pink, height: 28, padding: '0 12px', borderRadius: 6, font: '400 10px var(--kw-mono)', cursor: 'pointer' }}>delete</button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function Section({ title, empty, children }) {
+  const hasChildren = Array.isArray(children) ? children.length > 0 : Boolean(children)
+  return (
+    <div style={{ marginTop: 28 }}>
+      <div style={{ font: '700 11px var(--kw-mono)', color: KW.lavender, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 12 }}>{title}</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {hasChildren ? children : <div style={{ background: KW.surface, border: `1px solid ${KW.border}`, borderRadius: 8, padding: 16, font: '400 11px var(--kw-mono)', color: KW.text4 }}>{empty}</div>}
+      </div>
+    </div>
+  )
+}
+
+export default function ProfilePage() {
+  const { user, profile, refreshProfile } = useAuth()
+  const navigate = useNavigate()
+  const [username, setUsername] = useState(profile?.username || '')
+  const [builds, setBuilds] = useState([])
+  const [articles, setArticles] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const load = async () => {
+    setLoading(true)
+    const [{ data: ownBuilds }, { data: ownArticles }] = await Promise.all([
+      fetchOwnBuilds(user.id),
+      fetchOwnWikiArticles(user.id),
+    ])
+    setBuilds(ownBuilds)
+    setArticles(ownArticles)
+    setLoading(false)
+  }
+
+  useEffect(() => {
+    if (profile?.username) setUsername(profile.username)
+  }, [profile])
+
+  useEffect(() => {
+    if (user) load()
+  }, [user])
+
+  const saveProfile = async () => {
+    if (saving) return
+    setSaving(true)
+    setError('')
+    const { error: err } = await upsertProfile({ id: user.id, username })
+    setSaving(false)
+    if (err) setError(err.message || 'could not save profile.')
+    else refreshProfile(user)
+  }
+
+  const deleteBuild = async (id) => {
+    if (!window.confirm('Delete this build from your profile and public pages?')) return
+    await softDeleteOwnBuild(id)
+    load()
+  }
+
+  const deleteArticle = async (id) => {
+    if (!window.confirm('Delete this wiki submission from your profile and public pages?')) return
+    await softDeleteOwnWikiArticle(id)
+    load()
+  }
+
+  return (
+    <div style={{ background: KW.bg, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Nav />
+      <div style={{ flex: 1, padding: '32px var(--kw-page-x) 40px' }}>
+        <h1 style={{ font: '700 28px/1 var(--kw-mono)', color: KW.text, margin: '0 0 6px' }}>profile.</h1>
+        <p style={{ font: '400 12px var(--kw-mono)', color: KW.text3, margin: '0 0 22px' }}>
+          manage your builds and wiki submissions.
+        </p>
+
+        <div style={{ background: KW.surface, border: `1px solid ${KW.border}`, borderRadius: 8, padding: 20, maxWidth: 520 }}>
+          <div style={{ font: '700 11px var(--kw-mono)', color: KW.lavender, marginBottom: 14 }}>username.</div>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <input
+              value={username}
+              onChange={e => setUsername(e.target.value)}
+              style={{ flex: 1, minWidth: 220, height: 33, padding: '0 12px', borderRadius: 6, background: KW.surface2, border: `1px solid ${KW.surface3}`, color: KW.text, font: '400 11px var(--kw-mono)', outline: 'none' }}
+            />
+            <Button onClick={saveProfile} disabled={saving}>{saving ? 'saving...' : 'save'}</Button>
+          </div>
+          {error && <div style={{ marginTop: 10, font: '400 10px var(--kw-mono)', color: KW.pink }}>{error}</div>}
+        </div>
+
+        {loading ? (
+          <div style={{ marginTop: 28, font: '400 11px var(--kw-mono)', color: KW.text4 }}>loading your posts...</div>
+        ) : (
+          <>
+            <Section title="your builds" empty="no builds yet.">
+              {builds.map(b => (
+                <Row
+                  key={b.id}
+                  title={b.name}
+                  meta={`${b.layout || 'unknown layout'} · ${new Date(b.created_at).toLocaleDateString('en-US')}`}
+                  status={b.status}
+                  deleted={Boolean(b.deleted_at)}
+                  onEdit={() => navigate(`/builds/${buildSlug(b.name)}/edit`)}
+                  onDelete={() => deleteBuild(b.id)}
+                />
+              ))}
+            </Section>
+            <Section title="your wiki submissions" empty="no wiki submissions yet.">
+              {articles.map(a => (
+                <Row
+                  key={a.id}
+                  title={a.title}
+                  meta={`${a.category} · ${new Date(a.created_at).toLocaleDateString('en-US')}`}
+                  status={a.status}
+                  deleted={Boolean(a.deleted_at)}
+                  onEdit={() => navigate(`/wiki/${a.slug}/edit`)}
+                  onDelete={() => deleteArticle(a.id)}
+                />
+              ))}
+            </Section>
+          </>
+        )}
+      </div>
+      <Footer />
+    </div>
+  )
+}

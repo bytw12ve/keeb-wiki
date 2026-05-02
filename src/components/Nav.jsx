@@ -2,6 +2,7 @@
 import { useNavigate, useLocation } from 'react-router-dom'
 import { KW } from '../tokens.js'
 import Logo from './Logo.jsx'
+import { useAuth } from '../lib/auth.jsx'
 
 const LINKS = [
   { key: "home",   label: "home.",   path: "/" },
@@ -13,13 +14,20 @@ const LINKS = [
 export default function Nav() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, profile, signOut } = useAuth();
 
   const activeKey = location.pathname === "/" ? "home"
     : location.pathname.startsWith("/builds") ? "builds"
     : location.pathname.startsWith("/submit") ? "submit"
     : location.pathname.startsWith("/wiki") ? "wiki"
+    : location.pathname.startsWith("/profile") ? "profile"
+    : location.pathname.startsWith("/login") ? "login"
     : location.pathname.startsWith("/submit-wiki") ? "submit"
     : null;
+  const authLinks = user
+    ? [{ key: "profile", label: "profile.", path: "/profile" }]
+    : [{ key: "login", label: "login.", path: "/login" }]
+  const displayName = profile?.username || user?.user_metadata?.username || user?.email?.split('@')[0]
 
   return (
     <div style={{
@@ -38,8 +46,24 @@ export default function Nav() {
           the keyboard build archive
         </span>
       </a>
-      <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
-        {LINKS.map(({ key, label, path }) => {
+      <div style={{ display: "flex", gap: 18, flexWrap: "wrap", alignItems: "center" }}>
+        {user && displayName && (
+          <button
+            onClick={() => navigate('/profile')}
+            style={{
+              background: KW.surface2,
+              border: `1px solid ${KW.surface3}`,
+              borderRadius: 8,
+              padding: '6px 9px',
+              color: KW.lavender,
+              font: '700 10px var(--kw-mono)',
+              cursor: 'pointer',
+            }}
+          >
+            logged in as {displayName}.
+          </button>
+        )}
+        {[...LINKS, ...authLinks].map(({ key, label, path }) => {
           const isActive = activeKey === key;
           return (
             <a
@@ -57,6 +81,14 @@ export default function Nav() {
             >{label}</a>
           );
         })}
+        {user && (
+          <button
+            onClick={async () => { await signOut(); navigate('/') }}
+            style={{ background: 'none', border: 'none', padding: 0, font: '400 11px var(--kw-mono)', color: KW.text3, cursor: 'pointer' }}
+          >
+            logout.
+          </button>
+        )}
       </div>
     </div>
   )

@@ -50,8 +50,12 @@ function cleanSearchTerm(value) {
     .slice(0, 80)
 }
 
-export async function fetchBuilds({ q = '', filter = 'all' } = {}) {
-  let query = supabase.from('builds').select('*').order('created_at', { ascending: false })
+function isMissingPhase2Column(error) {
+  const msg = `${error?.message || ''} ${error?.details || ''}`
+  return msg.includes('deleted_at') || msg.includes('status') || msg.includes('user_id')
+}
+
+function applyBuildFilters(query, q, filter) {
   const search = cleanSearchTerm(q)
 
   if (search) {
@@ -75,7 +79,23 @@ export async function fetchBuilds({ q = '', filter = 'all' } = {}) {
     }
   }
 
-  const { data, error } = await query
+  return query
+}
+
+export async function fetchBuilds({ q = '', filter = 'all' } = {}) {
+  let query = supabase
+    .from('builds')
+    .select('*')
+    .is('deleted_at', null)
+    .or('status.eq.published,status.is.null')
+    .order('created_at', { ascending: false })
+  query = applyBuildFilters(query, q, filter)
+
+  let { data, error } = await query
+  if (error && isMissingPhase2Column(error)) {
+    query = supabase.from('builds').select('*').order('created_at', { ascending: false })
+    ;({ data, error } = await applyBuildFilters(query, q, filter))
+  }
   return { data: data || [], error }
 }
 
@@ -83,12 +103,22 @@ export async function fetchBuildBySlug(slug) {
   const safeSlug = String(slug || '').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 120)
   if (!safeSlug) return { data: null, error: new Error('Invalid build slug') }
   const nameGuess = safeSlug.replace(/-/g, ' ')
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('builds')
     .select('*')
+    .is('deleted_at', null)
+    .or('status.eq.published,status.is.null')
     .or(`slug.eq.${safeSlug},name.ilike.${nameGuess}`)
     .limit(1)
     .single()
+  if (error && isMissingPhase2Column(error)) {
+    ;({ data, error } = await supabase
+      .from('builds')
+      .select('*')
+      .or(`slug.eq.${safeSlug},name.ilike.${nameGuess}`)
+      .limit(1)
+      .single())
+  }
   return { data, error }
 }
 
@@ -108,37 +138,156 @@ export async function fetchWikiArticles({ category, status = 'published', limit 
     .from('wiki_articles')
     .select('*')
     .eq('status', status)
+    .is('deleted_at', null)
     .order('updated_at', { ascending: false })
   if (category) query = query.eq('category', category)
   if (limit) query = query.limit(limit)
-  const { data, error } = await query
+  let { data, error } = await query
+  if (error && isMissingPhase2Column(error)) {
+    query = supabase
+      .from('wiki_articles')
+      .select('*')
+      .eq('status', status)
+      .order('updated_at', { ascending: false })
+    if (category) query = query.eq('category', category)
+    if (limit) query = query.limit(limit)
+    ;({ data, error } = await query)
+  }
   return { data: data || [], error }
 }
 
 export async function fetchWikiArticleBySlug(slug) {
   const safeSlug = String(slug || '').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 120)
   if (!safeSlug) return { data: null, error: new Error('Invalid article slug') }
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('wiki_articles')
     .select('*')
     .eq('slug', safeSlug)
+    .eq('status', 'published')
+    .is('deleted_at', null)
     .single()
+  if (error && isMissingPhase2Column(error)) {
+    ;({ data, error } = await supabase
+      .from('wiki_articles')
+      .select('*')
+      .eq('slug', safeSlug)
+      .eq('status', 'published')
+      .single())
+  }
   return { data, error }
 }
 
 export async function searchWikiArticles(q) {
   const search = cleanSearchTerm(q)
   if (!search) return { data: [], error: null }
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('wiki_articles')
     .select('*')
     .eq('status', 'published')
+    .is('deleted_at', null)
     .or(`title.ilike.%${search}%,short_description.ilike.%${search}%`)
     .order('updated_at', { ascending: false })
+  if (error && isMissingPhase2Column(error)) {
+    ;({ data, error } = await supabase
+      .from('wiki_articles')
+      .select('*')
+      .eq('status', 'published')
+      .or(`title.ilike.%${search}%,short_description.ilike.%${search}%`)
+      .order('updated_at', { ascending: false }))
+  }
   return { data: data || [], error }
 }
 
-export async function submitWikiArticle({ title, category, description, tags, format, sections, combined }) {
+export async function getSessionUser() {
+  const { data, error } = await supabase.auth.getUser()
+  return { data: data?.user || null, error }
+}
+
+export const signUp = ({ email, password }) => supabase.auth.signUp({ email, password })
+export const signIn = ({ email, password }) => supabase.auth.signInWithPassword({ email, password })
+export const signOut = () => supabase.auth.signOut()
+
+export async function fetchProfile(id) {
+  if (!id) return { data: null, error: null }
+  const { data, error } = await supabase.from('profiles').select('*').eq('id', id).single()
+  return { data, error }
+}
+
+export async function upsertProfile({ id, username }) {
+  const cleanUsername = String(username || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_]+/g, '_')
+    .replace(/^_|_$/g, '')
+    .slice(0, 24)
+  if (!id || cleanUsername.length < 3) return { data: null, error: new Error('Username must be at least 3 characters.') }
+  const { data, error } = await supabase
+    .from('profiles')
+    .upsert({ id, username: cleanUsername, updated_at: new Date().toISOString() })
+    .select()
+    .single()
+  return { data, error }
+}
+
+export async function fetchOwnBuilds(userId) {
+  const { data, error } = await supabase
+    .from('builds')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+  return { data: data || [], error }
+}
+
+export async function fetchOwnWikiArticles(userId) {
+  const { data, error } = await supabase
+    .from('wiki_articles')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+  return { data: data || [], error }
+}
+
+export async function updateOwnBuild(id, patch) {
+  const { data, error } = await supabase
+    .from('builds')
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single()
+  return { data, error }
+}
+
+export async function softDeleteOwnBuild(id) {
+  const { data, error } = await supabase
+    .from('builds')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single()
+  return { data, error }
+}
+
+export async function updateOwnWikiArticle(id, patch) {
+  const { data, error } = await supabase
+    .from('wiki_articles')
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single()
+  return { data, error }
+}
+
+export async function softDeleteOwnWikiArticle(id) {
+  const { data, error } = await supabase
+    .from('wiki_articles')
+    .update({ deleted_at: new Date().toISOString() })
+    .eq('id', id)
+    .select()
+    .single()
+  return { data, error }
+}
+
+export async function submitWikiArticle({ title, category, description, tags, format, sections, combined, userId, submittedBy }) {
   const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
   const uniqueTags = [...new Set((tags || []).map(t => String(t).trim().toLowerCase()).filter(Boolean))]
   const { data, error } = await supabase
@@ -157,6 +306,8 @@ export async function submitWikiArticle({ title, category, description, tags, fo
         : null,
       combined_content: format === 'combined' ? combined : null,
       status: 'pending',
+      user_id: userId,
+      submitted_by: submittedBy,
     })
     .select()
     .single()

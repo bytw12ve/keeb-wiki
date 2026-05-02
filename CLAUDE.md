@@ -31,10 +31,14 @@ git -c commit.gpgsign=false commit
 - `/` -> `HomePage`
 - `/builds` -> `BuildsPage`
 - `/builds/:slug` -> `DetailsPage`
+- `/builds/:slug/edit` -> `BuildEditPage` (protected)
 - `/wiki` -> `WikiPage`
 - `/wiki/:slug` -> `WikiArticlePage`
+- `/wiki/:slug/edit` -> `WikiEditPage` (protected)
 - `/submit` -> `SubmitBuildPage`
 - `/submit-wiki` -> `SubmitWikiPage`
+- `/login` -> `LoginPage`
+- `/profile` -> `ProfilePage` (protected)
 
 ## Design System
 
@@ -66,10 +70,26 @@ Wiki helpers:
 - `searchWikiArticles(q)`
 - `submitWikiArticle(data)`
 
+Auth/profile helpers:
+- `getSessionUser()`
+- `signUp({ email, password })`
+- `signIn({ email, password })`
+- `signOut()`
+- `fetchProfile(id)`
+- `upsertProfile({ id, username })`
+- `fetchOwnBuilds(userId)`
+- `fetchOwnWikiArticles(userId)`
+- `updateOwnBuild(id, patch)`
+- `softDeleteOwnBuild(id)`
+- `updateOwnWikiArticle(id, patch)`
+- `softDeleteOwnWikiArticle(id)`
+
 Notes:
 - The Supabase publishable key is intentionally hardcoded; no `.env` is required.
 - `CATEGORY_SLUG_MAP` is internal to `supabase.js`.
-- Wiki submissions insert as `status: 'pending'`.
+- Build and wiki submissions insert as `status: 'pending'`.
+- Public reads show published, non-deleted content; signed-in users can also see their own pending content.
+- Existing seeded rows with `user_id = null` are legacy/system-owned content and are not editable by normal users.
 - `getArt(build)` falls back to palette inference from `case_material`.
 - `fetchBuildBySlug(slug)` uses exact slug plus fuzzy name fallback.
 
@@ -80,10 +100,16 @@ SQL files must be run manually in the Supabase SQL Editor.
 - `supabase/seed.sql` creates/seeds `builds`, storage buckets, RLS policies, and upload limits.
 - `supabase/wiki.sql` creates/seeds `wiki_articles` and the `updated_at` trigger.
 - `supabase/security_fixes.sql` applies Security Advisor fixes for existing projects.
+- `supabase/phase2_auth.sql` adds profiles, ownership fields, pending moderation, soft deletes, authenticated inserts, and user-scoped storage policies.
 
 Important columns:
+- `builds.user_id` references `auth.users(id)` for user-owned posts.
+- `builds.status` values: `pending`, `published`, `rejected`.
+- `builds.deleted_at` implements soft delete.
 - `builds.photos` stores public Supabase Storage URLs.
 - `builds.sound_signature` and `builds.typing_feel` are text arrays.
+- `wiki_articles.user_id` references `auth.users(id)` for user-owned posts.
+- `wiki_articles.deleted_at` implements soft delete.
 - `wiki_articles.category` values: `beginner-guides`, `modding-guides`, `parts-glossary`, `sound-feel`, `community-buying`, `about`.
 - `wiki_articles.format` values: `sections`, `combined`.
 - `wiki_articles.status` values: `draft`, `pending`, `published`.
@@ -122,14 +148,52 @@ Supabase SQL editor note:
 - Added hidden watermark comments: `/* built by twelve. — bytw12ve */`.
 - Added wiki category browsing, homepage wiki section, and wiki article submit callouts.
 
-## Current Phase — Phase 2
+## Completed Phase 2 Foundation
 
-- [ ] User auth — sign up, log in, log out via Supabase Auth
-- [ ] User profile page — see own builds and comments
-- [ ] Edit and delete own posts
+- Added Supabase Auth context and protected routes.
+- Added `/login` and `/profile`.
+- Added logged-in nav state with username plus logout.
+- Protected `/submit`, `/submit-wiki`, and `/profile`.
+- Added user-owned build and wiki submissions.
+- Added pending review for new build and wiki submissions.
+- Added profile dashboard for own builds and own wiki submissions.
+- Added edit routes for own builds and wiki articles.
+- Added soft delete helpers for own builds and wiki articles.
+- Removed manual `submitted_by` trust from submit forms; submissions use profile username or email fallback.
+- Added custom tags for wiki article submissions.
+- Added `supabase/phase2_auth.sql` for ownership, RLS, moderation, and user-scoped uploads.
+
+## Current Phase — Phase 2.1 QA And Auth Hardening
+
+- [x] Re-run logged-in QA with email confirmation temporarily disabled.
+- [x] Create a test account, submit a test build, submit a test wiki article, edit owned content, and confirm public visibility rules.
+- [x] Update docs for the current Phase 2 foundation.
+- [ ] Commit the current Phase 2 foundation.
+- [ ] Add Google OAuth login after QA passes.
+- [ ] Add Cloudflare Turnstile to sign up and login.
+- [ ] Enable Supabase Leaked Password Protection in the dashboard.
+- [ ] Configure production auth email later after the real domain is ready.
+- [ ] Production domain target is `keebwiki.com`; email sender is temporary until that domain is acquired/configured.
+- [ ] Planned production sender: product-branded `no-reply@keebwiki.com` once the domain is ready.
+- [ ] Email templates should be product-first with subtle footer branding: `built by twelve.`
+- [ ] Keep email confirmation off only for local QA; turn it back on before production once SMTP and templates are configured.
+- [ ] Do not add phone login yet; revisit later for MFA or recovery after Google login is stable.
+
+## Phase 2 QA Notes
+
+- Created QA account `qa_40146` with email confirmation temporarily disabled.
+- Confirmed logged-in nav shows the username as `logged in as qa_40146.`
+- Submitted a build as the QA user and confirmed it appears in `/profile` with `pending` status.
+- Submitted a wiki article as the QA user and confirmed it appears in `/profile` with `pending` status.
+- Edited the QA build and confirmed the updated title appears in `/profile` while remaining pending.
+- Confirmed the pending QA build does not appear on public `/builds`.
+- Confirmed searching public `/wiki` for the pending QA article returns no results.
+- Did not soft-delete QA content during the visible QA pass because deletes affect Supabase data, even when the records are test records.
+
+## Later Phase 2
+
 - [ ] Comments on builds and wiki articles
 - [ ] Upvote and favorite builds
-- [ ] Custom tags when submitting wiki articles
 - [ ] Audio file upload with size limits
 
 ## Phase 3
