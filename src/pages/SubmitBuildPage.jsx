@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { KW } from '../tokens.js'
 import Nav from '../components/Nav.jsx'
@@ -156,6 +156,20 @@ export default function SubmitBuildPage() {
     builder_notes: '', rating: null,
   })
   const [photos, setPhotos] = useState(Array(6).fill(null))
+  const previewUrls = useRef(new Set())
+
+  useEffect(() => {
+    return () => {
+      previewUrls.current.forEach(url => URL.revokeObjectURL(url))
+      previewUrls.current.clear()
+    }
+  }, [])
+
+  const clearPhotoPreviews = () => {
+    previewUrls.current.forEach(url => URL.revokeObjectURL(url))
+    previewUrls.current.clear()
+    setPhotos(Array(6).fill(null))
+  }
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
   const toggleArr = (k, v) => setForm(f => ({ ...f, [k]: f[k].includes(v) ? f[k].filter(x => x !== v) : [...f[k], v] }))
@@ -171,9 +185,26 @@ export default function SubmitBuildPage() {
     }
     setError('')
     const preview = URL.createObjectURL(file)
-    setPhotos(p => { const next = [...p]; next[idx] = { file, preview }; return next })
+    previewUrls.current.add(preview)
+    setPhotos(p => {
+      const next = [...p]
+      if (next[idx]?.preview) {
+        URL.revokeObjectURL(next[idx].preview)
+        previewUrls.current.delete(next[idx].preview)
+      }
+      next[idx] = { file, preview }
+      return next
+    })
   }
-  const removePhoto = (idx) => setPhotos(p => { const next = [...p]; next[idx] = null; return next })
+  const removePhoto = (idx) => setPhotos(p => {
+    const next = [...p]
+    if (next[idx]?.preview) {
+      URL.revokeObjectURL(next[idx].preview)
+      previewUrls.current.delete(next[idx].preview)
+    }
+    next[idx] = null
+    return next
+  })
 
   const photoCount = photos.filter(Boolean).length
 
@@ -226,13 +257,21 @@ export default function SubmitBuildPage() {
       }
       const { error: insertError } = await supabase.from('builds').insert(payload)
       if (insertError) throw insertError
+      clearPhotoPreviews()
       setSuccess(true)
     } catch (e) {
       console.error(e)
       if (uploadedPaths.length > 0) {
         await supabase.storage.from('build-photos').remove(uploadedPaths)
       }
-      setError('something went wrong submitting this build.')
+      const msg = `${e?.message || ''} ${e?.details || ''}`
+      if (msg.toLowerCase().includes('row-level security')) {
+        setError('your session could not submit this build. log out and back in, then try again.')
+      } else if (msg.toLowerCase().includes('duplicate')) {
+        setError('a build with this generated route already exists. try a more specific keyboard name.')
+      } else {
+        setError('something went wrong submitting this build. check required fields and try again.')
+      }
     }
     setSubmitting(false)
   }

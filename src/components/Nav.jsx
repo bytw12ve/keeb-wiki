@@ -1,5 +1,5 @@
 /* built by twelve. — bytw12ve */
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { KW } from '../tokens.js'
 import Logo from './Logo.jsx'
@@ -36,6 +36,9 @@ export default function Nav() {
     window.clearTimeout(accountCloseTimer.current)
     accountCloseTimer.current = window.setTimeout(() => setAccountOpen(false), 180)
   }
+  useEffect(() => {
+    return () => window.clearTimeout(accountCloseTimer.current)
+  }, [])
   const textLinkStyle = (isActive) => ({
     font: `${isActive ? 700 : 400} 11px var(--kw-mono)`,
     color: isActive ? KW.lavender : KW.text3,

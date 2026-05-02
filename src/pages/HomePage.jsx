@@ -9,7 +9,7 @@ import Button from '../components/Button.jsx'
 import Input from '../components/Input.jsx'
 import KeebArt from '../components/KeebArt.jsx'
 import Toast, { flashToast } from '../components/Toast.jsx'
-import { fetchBuilds, getArt, getLayoutCode, getBuildTags, buildSlug } from '../lib/supabase.js'
+import { fetchBuilds, getArt, getLayoutCode, getBuildTags, buildRouteSlug } from '../lib/supabase.js'
 
 function Hero({ q, setQ, onSearch, buildCount }) {
   return (
@@ -234,7 +234,7 @@ export default function HomePage() {
   const featured = builds.slice(0, 2)
   const recent = builds.slice(0, 5)
 
-  const goToBuild = (b) => navigate(`/builds/${buildSlug(b.name)}`)
+  const goToBuild = (b) => navigate(`/builds/${buildRouteSlug(b)}`)
 
   return (
     <div style={{ background: KW.bg, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>

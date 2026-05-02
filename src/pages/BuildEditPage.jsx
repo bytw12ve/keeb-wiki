@@ -6,7 +6,7 @@ import Nav from '../components/Nav.jsx'
 import Footer from '../components/Footer.jsx'
 import Button from '../components/Button.jsx'
 import { useAuth } from '../lib/auth.jsx'
-import { buildSlug, fetchOwnBuilds, updateOwnBuild } from '../lib/supabase.js'
+import { buildRouteSlug, buildSlug, fetchOwnBuilds, updateOwnBuild } from '../lib/supabase.js'
 
 const LAYOUTS = ['40%','60%','65%','75%','TKL','WKL','Full']
 const MATERIALS = ['Aluminum','Polycarbonate','Steel','Brass','Carbon Fiber','POM','Acrylic']
@@ -71,7 +71,7 @@ export default function BuildEditPage() {
 
   useEffect(() => {
     fetchOwnBuilds(user.id).then(({ data }) => {
-      const build = data.find(b => buildSlug(b.name) === slug)
+      const build = data.find(b => buildRouteSlug(b) === slug || buildSlug(b.name) === slug)
       setForm(build || null)
       setLoading(false)
     })

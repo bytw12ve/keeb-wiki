@@ -63,6 +63,7 @@ Build helpers:
 - `getLayoutCode(layout)`
 - `getBuildTags(build)`
 - `buildSlug(name)`
+- `buildRouteSlug(build)`
 
 Wiki helpers:
 - `fetchWikiArticles({ category, status, limit })`
@@ -102,6 +103,7 @@ SQL files must be run manually in the Supabase SQL Editor.
 - `supabase/wiki.sql` creates/seeds `wiki_articles` and the `updated_at` trigger.
 - `supabase/security_fixes.sql` applies Security Advisor fixes for existing projects.
 - `supabase/phase2_auth.sql` adds profiles, ownership fields, pending moderation, soft deletes, authenticated inserts, and user-scoped storage policies.
+- `supabase/phase2_1_rls_hardening.sql` prevents regular users from publishing their own submissions through direct client updates and adds `rejected` wiki status support.
 
 Important columns:
 - `builds.user_id` references `auth.users(id)` for user-owned posts.
@@ -113,7 +115,7 @@ Important columns:
 - `wiki_articles.deleted_at` implements soft delete.
 - `wiki_articles.category` values: `beginner-guides`, `modding-guides`, `parts-glossary`, `sound-feel`, `community-buying`, `about`.
 - `wiki_articles.format` values: `sections`, `combined`.
-- `wiki_articles.status` values: `draft`, `pending`, `published`.
+- `wiki_articles.status` values: `draft`, `pending`, `published`, `rejected`.
 
 Supabase SQL editor note:
 - Price strings in `wiki.sql` seed JSON should use JSON unicode escaping for dollar signs inside `$j$...$j$` literals so the editor does not treat them as query parameters.
@@ -130,6 +132,7 @@ Supabase SQL editor note:
 - Wiki category browsing uses `?category=...`.
 - Wiki article TOC uses `IntersectionObserver`.
 - Wiki article reading progress is a fixed 2px lavender bar at the top.
+- Build links should use `buildRouteSlug(build)` for stable `/builds/{uuid}-{readable-slug}` URLs; old slug-only build URLs should keep working as fallback.
 
 ## Hard Rules
 
@@ -182,7 +185,7 @@ Supabase SQL editor note:
 - [x] Block signup passwords shorter than 8 characters before calling Supabase.
 - [x] Commit the current Phase 2 foundation.
 - [x] Add Google OAuth login after QA passes.
-- [ ] Configure Google provider credentials and redirect URLs in the Supabase dashboard.
+- [x] Configure Google provider credentials and redirect URLs in the Supabase dashboard.
 - [ ] Add Cloudflare Turnstile to sign up and login after the Turnstile site key and Supabase captcha settings are available.
 - [ ] Enable Supabase Leaked Password Protection in the dashboard.
 - [ ] Configure production auth email later after the real domain is ready.
@@ -191,6 +194,12 @@ Supabase SQL editor note:
 - [ ] Email templates should be product-first with subtle footer branding: `built by twelve.`
 - [ ] Keep email confirmation off only for local QA; turn it back on before production once SMTP and templates are configured.
 - [ ] Do not add phone login yet; revisit later for MFA or recovery after Google login is stable.
+- [x] Add Phase 2.1 RLS hardening SQL for owner updates and wiki rejected status.
+- [x] Use stable UUID-based build route slugs while preserving old slug fallback.
+- [x] Replace native profile delete confirms with in-app confirmation UI.
+- [x] Revoke local build photo preview URLs when removed or on submit-page unmount.
+- [x] Improve submit error messages for duplicate wiki titles and common submission failures.
+- [ ] Run `supabase/phase2_1_rls_hardening.sql` manually in the Supabase SQL Editor.
 
 ## Phase 2 QA Notes
 
@@ -210,8 +219,7 @@ Supabase SQL editor note:
 - Email OTP expiration is set to 3600 seconds.
 - Email OTP length is set to 8 digits.
 - Minimum password length should be 8 characters; the app also validates this on signup.
-- Google OAuth app UI and Supabase client flow are wired.
-- Supabase Google provider toggle is enabled, but Client IDs and Client Secret still need Google Cloud OAuth credentials.
+- Google OAuth app UI, Supabase client flow, provider toggle, Client IDs, and Client Secret are configured.
 - Google Cloud OAuth should register Supabase callback URL: `https://yxucqsofablzsgyeyrmb.supabase.co/auth/v1/callback`.
 - Cloudflare Turnstile is blocked until a public site key exists and Supabase captcha protection is configured.
 - Leaked Password Protection is still disabled unless it can be enabled on the current Supabase plan.
@@ -219,6 +227,9 @@ Supabase SQL editor note:
 
 ## Later Phase 2
 
+- [ ] Small staff moderation flow for accepting/rejecting submitted builds and wiki articles.
+- [ ] Owner-visible rejected feedback/reason fields for builds and wiki articles.
+- [ ] Lightweight empty/error states across profile, builds, wiki search, and details pages.
 - [ ] Comments on builds and wiki articles
 - [ ] Upvote and favorite builds
 - [ ] Audio file upload with size limits

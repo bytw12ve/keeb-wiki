@@ -12,6 +12,17 @@ export function buildSlug(name) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 }
 
+export function buildRouteSlug(build) {
+  const readable = buildSlug(build?.name || 'build')
+  return build?.id ? `${build.id}-${readable}` : readable
+}
+
+function parseBuildRouteSlug(value) {
+  const safeSlug = String(value || '').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 160)
+  const uuidMatch = safeSlug.match(/^([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:-|$)/)
+  return { safeSlug, buildId: uuidMatch?.[1] || null }
+}
+
 export function getArt(build) {
   if (build.art) return build.art
   const mat = (build.case_material || '').toLowerCase()
@@ -100,8 +111,27 @@ export async function fetchBuilds({ q = '', filter = 'all' } = {}) {
 }
 
 export async function fetchBuildBySlug(slug, { ownerId } = {}) {
-  const safeSlug = String(slug || '').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 120)
+  const { safeSlug, buildId } = parseBuildRouteSlug(slug)
   if (!safeSlug) return { data: null, error: new Error('Invalid build slug') }
+  if (buildId) {
+    let { data, error } = await supabase
+      .from('builds')
+      .select('*')
+      .eq('id', buildId)
+      .is('deleted_at', null)
+      .or('status.eq.published,status.is.null')
+      .single()
+    if ((!data || error) && ownerId && !isMissingPhase2Column(error)) {
+      ;({ data, error } = await supabase
+        .from('builds')
+        .select('*')
+        .eq('id', buildId)
+        .eq('user_id', ownerId)
+        .is('deleted_at', null)
+        .single())
+    }
+    return { data, error }
+  }
   const nameGuess = safeSlug.replace(/-/g, ' ')
   let { data, error } = await supabase
     .from('builds')

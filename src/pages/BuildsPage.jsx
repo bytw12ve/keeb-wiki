@@ -10,7 +10,7 @@ import Button from '../components/Button.jsx'
 import Input from '../components/Input.jsx'
 import KeebArt from '../components/KeebArt.jsx'
 import Toast from '../components/Toast.jsx'
-import { fetchBuilds, getArt, getLayoutCode, getBuildTags, buildSlug } from '../lib/supabase.js'
+import { fetchBuilds, getArt, getLayoutCode, getBuildTags, buildRouteSlug } from '../lib/supabase.js'
 
 const BUILDS_FILTERS = ['all','60%','65%','75%','TKL','linear','tactile','clicky','brass','aluminum','polycarbonate','WKL']
 
@@ -155,7 +155,7 @@ export default function BuildsPage() {
           {loading
             ? Array(10).fill(0).map((_, i) => <div key={i} style={{ height: 220, background: KW.surface, borderRadius: 8, border: `1px solid ${KW.border}` }} />)
             : paged.map((b, i) => (
-                <GridBuildCard key={b.id || i} b={b} onClick={() => navigate(`/builds/${buildSlug(b.name)}`)} />
+                <GridBuildCard key={b.id || i} b={b} onClick={() => navigate(`/builds/${buildRouteSlug(b)}`)} />
               ))
           }
         </div>

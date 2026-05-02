@@ -157,7 +157,14 @@ export default function SubmitWikiPage() {
     })
     setSubmitting(false)
     if (err) {
-      setError('something went wrong. please try again.')
+      const msg = `${err.message || ''} ${err.details || ''}`.toLowerCase()
+      if (err.code === '23505' || msg.includes('duplicate') || msg.includes('wiki_articles_slug_key')) {
+        setError('an article with this title already exists. try a more specific title.')
+      } else if (msg.includes('row-level security')) {
+        setError('your session could not submit this article. log out and back in, then try again.')
+      } else {
+        setError('something went wrong. check required fields and try again.')
+      }
     } else {
       setSuccess(true)
     }

@@ -5,7 +5,7 @@ import { KW } from '../tokens.js'
 import Nav from '../components/Nav.jsx'
 import Footer from '../components/Footer.jsx'
 import { useAuth } from '../lib/auth.jsx'
-import { fetchOwnBuilds, fetchOwnWikiArticles, softDeleteOwnBuild, softDeleteOwnWikiArticle, buildSlug } from '../lib/supabase.js'
+import { fetchOwnBuilds, fetchOwnWikiArticles, softDeleteOwnBuild, softDeleteOwnWikiArticle, buildRouteSlug } from '../lib/supabase.js'
 
 function StatusPill({ status, deleted }) {
   const label = deleted ? 'deleted' : status || 'published'
@@ -55,12 +55,36 @@ function Section({ title, empty, children }) {
   )
 }
 
+function ConfirmDelete({ target, onCancel, onConfirm, busy }) {
+  if (!target) return null
+  return (
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 2000,
+      background: 'rgba(14,12,24,.72)',
+      display: 'grid', placeItems: 'center', padding: 20,
+    }}>
+      <div style={{ width: '100%', maxWidth: 420, background: KW.surface, border: `1px solid ${KW.border}`, borderRadius: 8, padding: 20, boxShadow: '0 18px 40px rgba(0,0,0,.34)' }}>
+        <div style={{ font: '700 14px var(--kw-mono)', color: KW.text, marginBottom: 8 }}>delete {target.kind}?</div>
+        <div style={{ font: '400 11px/1.6 var(--kw-mono)', color: KW.text3, marginBottom: 18 }}>
+          this will remove <span style={{ color: KW.text2 }}>{target.title}</span> from your profile and public pages.
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+          <button onClick={onCancel} disabled={busy} style={{ height: 30, padding: '0 14px', borderRadius: 6, border: `1px solid ${KW.surface3}`, background: 'transparent', color: KW.text3, font: '400 10px var(--kw-mono)', cursor: busy ? 'default' : 'pointer', opacity: busy ? .6 : 1 }}>cancel</button>
+          <button onClick={onConfirm} disabled={busy} style={{ height: 30, padding: '0 14px', borderRadius: 6, border: `1px solid ${KW.pink}`, background: 'transparent', color: KW.pink, font: '700 10px var(--kw-mono)', cursor: busy ? 'default' : 'pointer', opacity: busy ? .6 : 1 }}>{busy ? 'deleting...' : 'delete'}</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function ProfilePage() {
   const { user, profile } = useAuth()
   const navigate = useNavigate()
   const [builds, setBuilds] = useState([])
   const [articles, setArticles] = useState([])
   const [loading, setLoading] = useState(true)
+  const [confirmDelete, setConfirmDelete] = useState(null)
+  const [deleting, setDeleting] = useState(false)
 
   const load = async () => {
     setLoading(true)
@@ -78,14 +102,18 @@ export default function ProfilePage() {
   }, [user])
 
   const deleteBuild = async (id) => {
-    if (!window.confirm('Delete this build from your profile and public pages?')) return
+    setDeleting(true)
     await softDeleteOwnBuild(id)
+    setDeleting(false)
+    setConfirmDelete(null)
     load()
   }
 
   const deleteArticle = async (id) => {
-    if (!window.confirm('Delete this wiki submission from your profile and public pages?')) return
+    setDeleting(true)
     await softDeleteOwnWikiArticle(id)
+    setDeleting(false)
+    setConfirmDelete(null)
     load()
   }
   const displayName = profile?.username || user?.email?.split('@')[0] || 'member'
@@ -128,9 +156,9 @@ export default function ProfilePage() {
                   meta={`${b.layout || 'unknown layout'} · ${new Date(b.created_at).toLocaleDateString('en-US')}`}
                   status={b.status}
                   deleted={Boolean(b.deleted_at)}
-                  onView={() => navigate(`/builds/${b.slug || buildSlug(b.name)}`)}
-                  onEdit={() => navigate(`/builds/${buildSlug(b.name)}/edit`)}
-                  onDelete={() => deleteBuild(b.id)}
+                  onView={() => navigate(`/builds/${buildRouteSlug(b)}`)}
+                  onEdit={() => navigate(`/builds/${buildRouteSlug(b)}/edit`)}
+                  onDelete={() => setConfirmDelete({ kind: 'build', title: b.name, onConfirm: () => deleteBuild(b.id) })}
                 />
               ))}
             </Section>
@@ -144,13 +172,19 @@ export default function ProfilePage() {
                   deleted={Boolean(a.deleted_at)}
                   onView={() => navigate(`/wiki/${a.slug}`)}
                   onEdit={() => navigate(`/wiki/${a.slug}/edit`)}
-                  onDelete={() => deleteArticle(a.id)}
+                  onDelete={() => setConfirmDelete({ kind: 'wiki article', title: a.title, onConfirm: () => deleteArticle(a.id) })}
                 />
               ))}
             </Section>
           </>
         )}
       </div>
+      <ConfirmDelete
+        target={confirmDelete}
+        busy={deleting}
+        onCancel={() => !deleting && setConfirmDelete(null)}
+        onConfirm={() => confirmDelete?.onConfirm()}
+      />
       <Footer />
     </div>
   )
