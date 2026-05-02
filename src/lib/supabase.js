@@ -304,6 +304,7 @@ export async function fetchOwnBuilds(userId) {
     .from('builds')
     .select('*')
     .eq('user_id', userId)
+    .is('deleted_at', null)
     .order('created_at', { ascending: false })
   return { data: data || [], error }
 }
@@ -313,6 +314,7 @@ export async function fetchOwnWikiArticles(userId) {
     .from('wiki_articles')
     .select('*')
     .eq('user_id', userId)
+    .is('deleted_at', null)
     .order('created_at', { ascending: false })
   return { data: data || [], error }
 }
@@ -328,13 +330,12 @@ export async function updateOwnBuild(id, patch) {
 }
 
 export async function softDeleteOwnBuild(id) {
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('builds')
     .update({ deleted_at: new Date().toISOString() })
     .eq('id', id)
-    .select()
-    .single()
-  return { data, error }
+    .is('deleted_at', null)
+  return { data: null, error }
 }
 
 export async function updateOwnWikiArticle(id, patch) {
@@ -348,13 +349,12 @@ export async function updateOwnWikiArticle(id, patch) {
 }
 
 export async function softDeleteOwnWikiArticle(id) {
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('wiki_articles')
     .update({ deleted_at: new Date().toISOString() })
     .eq('id', id)
-    .select()
-    .single()
-  return { data, error }
+    .is('deleted_at', null)
+  return { data: null, error }
 }
 
 export async function submitWikiArticle({ title, category, description, tags, format, sections, combined, userId, submittedBy }) {

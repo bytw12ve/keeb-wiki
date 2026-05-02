@@ -85,6 +85,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true)
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [deleting, setDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
 
   const load = async () => {
     setLoading(true)
@@ -103,18 +104,28 @@ export default function ProfilePage() {
 
   const deleteBuild = async (id) => {
     setDeleting(true)
-    await softDeleteOwnBuild(id)
+    setDeleteError('')
+    const { error } = await softDeleteOwnBuild(id)
     setDeleting(false)
+    if (error) {
+      setDeleteError('could not delete that build. refresh and try again.')
+      return
+    }
     setConfirmDelete(null)
-    load()
+    await load()
   }
 
   const deleteArticle = async (id) => {
     setDeleting(true)
-    await softDeleteOwnWikiArticle(id)
+    setDeleteError('')
+    const { error } = await softDeleteOwnWikiArticle(id)
     setDeleting(false)
+    if (error) {
+      setDeleteError('could not delete that wiki article. refresh and try again.')
+      return
+    }
     setConfirmDelete(null)
-    load()
+    await load()
   }
   const displayName = profile?.username || user?.email?.split('@')[0] || 'member'
 
@@ -143,6 +154,8 @@ export default function ProfilePage() {
             username changes are not self-service yet.
           </div>
         </div>
+
+        {deleteError && <div style={{ marginTop: 18, font: '400 10px var(--kw-mono)', color: KW.pink }}>{deleteError}</div>}
 
         {loading ? (
           <div style={{ marginTop: 28, font: '400 11px var(--kw-mono)', color: KW.text4 }}>loading your posts...</div>
