@@ -1,13 +1,14 @@
 /* built by twelve. — bytw12ve */
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { KW } from '../tokens.js'
 import Nav from '../components/Nav.jsx'
 import Footer from '../components/Footer.jsx'
 import Button from '../components/Button.jsx'
 import { useAuth } from '../lib/auth.jsx'
-import { buildRouteSlug, buildSlug, fetchOwnBuilds, updateOwnBuild } from '../lib/supabase.js'
+import { buildRouteSlug, buildSlug, fetchOwnBuilds, supabase, updateOwnBuild } from '../lib/supabase.js'
 
+const MAX_PHOTO_SIZE = 5 * 1024 * 1024
 const LAYOUTS = ['40%','60%','65%','75%','TKL','WKL','Full']
 const MATERIALS = ['Aluminum','Polycarbonate','Steel','Brass','Carbon Fiber','POM','Acrylic']
 const PLATES = ['Aluminum','Brass','Polycarbonate','FR4','Carbon Fiber','POM','PE','Copper']
@@ -15,6 +16,7 @@ const SWITCH_TYPES = ['linear','tactile','clicky']
 const SOUND_SIGS = ['thocky','clacky','muted','poppy','creamy']
 const TYPING_FEELS = ['smooth','light','heavy','fast','bouncy']
 const SOUND_LEVELS = ['quiet','medium','loud']
+const PHOTO_TYPES = ['image/jpeg','image/png','image/webp','image/gif']
 
 function Field({ label, children }) {
   return (
@@ -60,6 +62,61 @@ function MultiToggle({ options, selected, onToggle, single }) {
   )
 }
 
+function PhotoSlot({ photo, onAdd, onRemove, index }) {
+  const [dragOver, setDragOver] = useState(false)
+  const inputId = `edit-photo-input-${index}`
+  return (
+    <div
+      onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={(e) => { e.preventDefault(); setDragOver(false); const f = e.dataTransfer.files[0]; if (f) onAdd(f, index) }}
+      onClick={() => { const el = document.getElementById(inputId); el && el.click() }}
+      style={{
+        paddingTop: '75%', position: 'relative', borderRadius: 6, overflow: 'hidden',
+        border: `1px dashed ${dragOver ? KW.lavender : photo ? 'transparent' : KW.surface3}`,
+        background: photo ? 'transparent' : KW.surface2, cursor: 'pointer', transition: 'border-color .18s',
+      }}
+    >
+      {photo
+        ? <img src={photo.preview} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+        : <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            <span style={{ font: '400 10px var(--kw-mono)', color: KW.text4 }}>add photo</span>
+          </div>
+      }
+      {photo && (
+        <>
+          <div style={{
+            position: 'absolute', left: 6, bottom: 6, borderRadius: 4, padding: '3px 6px',
+            background: 'rgba(30,27,46,.82)', color: KW.text3, font: '400 9px var(--kw-mono)',
+          }}>{photo.file ? 'new' : 'replace'}</div>
+          <button onClick={(e) => { e.stopPropagation(); onRemove(index) }} style={{
+            position: 'absolute', top: 6, right: 6, width: 20, height: 20, borderRadius: '50%',
+            background: 'rgba(30,27,46,.85)', border: 'none', color: KW.text3, cursor: 'pointer',
+            font: '400 11px var(--kw-mono)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>×</button>
+        </>
+      )}
+      <input id={inputId} type="file" accept="image/*" style={{ display: 'none' }}
+        onChange={(e) => { const f = e.target.files[0]; if (f) onAdd(f, index); e.target.value = '' }} />
+    </div>
+  )
+}
+
+function buildPhotoSlots(urls) {
+  const slots = Array(6).fill(null)
+  ;(urls || []).filter(Boolean).slice(0, 6).forEach((url, i) => {
+    slots[i] = { url, preview: url }
+  })
+  return slots
+}
+
+function storagePathFromPublicUrl(url) {
+  const marker = '/storage/v1/object/public/build-photos/'
+  const idx = String(url || '').indexOf(marker)
+  if (idx === -1) return null
+  return decodeURIComponent(String(url).slice(idx + marker.length).split('?')[0])
+}
+
 export default function BuildEditPage() {
   const { slug } = useParams()
   const { user } = useAuth()
@@ -68,17 +125,63 @@ export default function BuildEditPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
+  const [photos, setPhotos] = useState(Array(6).fill(null))
+  const [originalPhotoUrls, setOriginalPhotoUrls] = useState([])
+  const previewUrls = useRef(new Set())
 
   useEffect(() => {
     fetchOwnBuilds(user.id).then(({ data }) => {
       const build = data.find(b => buildRouteSlug(b) === slug || buildSlug(b.name) === slug)
       setForm(build || null)
+      const urls = (build?.photos || []).filter(Boolean)
+      setOriginalPhotoUrls(urls)
+      setPhotos(buildPhotoSlots(urls))
       setLoading(false)
     })
   }, [slug, user.id])
 
+  useEffect(() => {
+    return () => {
+      previewUrls.current.forEach(url => URL.revokeObjectURL(url))
+      previewUrls.current.clear()
+    }
+  }, [])
+
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
   const toggleArr = (k, v) => setForm(f => ({ ...f, [k]: f[k]?.includes(v) ? f[k].filter(x => x !== v) : [...(f[k] || []), v] }))
+
+  const addPhoto = (file, idx) => {
+    if (!PHOTO_TYPES.includes(file.type)) {
+      setError('photos must be jpg, png, webp, or gif.')
+      return
+    }
+    if (file.size > MAX_PHOTO_SIZE) {
+      setError('photos must be 5MB or smaller.')
+      return
+    }
+    setError('')
+    const preview = URL.createObjectURL(file)
+    previewUrls.current.add(preview)
+    setPhotos(p => {
+      const next = [...p]
+      if (next[idx]?.file && next[idx]?.preview) {
+        URL.revokeObjectURL(next[idx].preview)
+        previewUrls.current.delete(next[idx].preview)
+      }
+      next[idx] = { file, preview }
+      return next
+    })
+  }
+
+  const removePhoto = (idx) => setPhotos(p => {
+    const next = [...p]
+    if (next[idx]?.file && next[idx]?.preview) {
+      URL.revokeObjectURL(next[idx].preview)
+      previewUrls.current.delete(next[idx].preview)
+    }
+    next[idx] = null
+    return next
+  })
 
   const save = async () => {
     if (saving) return
@@ -88,6 +191,7 @@ export default function BuildEditPage() {
     }
     setSaving(true)
     setError('')
+    const uploadedPaths = []
     const patch = {
       name: form.name.trim(),
       layout: form.layout,
@@ -109,10 +213,49 @@ export default function BuildEditPage() {
       rating: form.rating,
       status: 'pending',
     }
-    const { error: err } = await updateOwnBuild(form.id, patch)
-    setSaving(false)
-    if (err) setError('could not save build.')
-    else navigate('/profile')
+    try {
+      const finalPhotoUrls = []
+      for (const photo of photos) {
+        if (!photo) continue
+        if (photo.url) {
+          finalPhotoUrls.push(photo.url)
+          continue
+        }
+        const ext = photo.file.name.split('.').pop().toLowerCase()
+        const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+        const { data: up, error: uploadError } = await supabase.storage.from('build-photos').upload(path, photo.file, {
+          contentType: photo.file.type,
+          upsert: false,
+        })
+        if (uploadError) throw uploadError
+        uploadedPaths.push(path)
+        if (up) {
+          const { data: url } = supabase.storage.from('build-photos').getPublicUrl(path)
+          if (url?.publicUrl) finalPhotoUrls.push(url.publicUrl)
+        }
+      }
+      const { error: err } = await updateOwnBuild(form.id, { ...patch, photos: finalPhotoUrls })
+      if (err) throw err
+
+      const removedPaths = originalPhotoUrls
+        .filter(url => !finalPhotoUrls.includes(url))
+        .map(storagePathFromPublicUrl)
+        .filter(Boolean)
+      if (removedPaths.length > 0) {
+        await supabase.storage.from('build-photos').remove(removedPaths)
+      }
+      setSaving(false)
+      navigate('/profile')
+    } catch (e) {
+      console.error(e)
+      if (uploadedPaths.length > 0) {
+        await supabase.storage.from('build-photos').remove(uploadedPaths)
+      }
+      const msg = `${e?.message || ''} ${e?.details || ''}`.toLowerCase()
+      if (msg.includes('row-level security')) setError('your session could not save these photos. log out and back in, then try again.')
+      else setError('could not save build.')
+      setSaving(false)
+    }
   }
 
   if (loading) return <div style={{ background: KW.bg, minHeight: '100vh', display: 'grid', placeItems: 'center', color: KW.text4, font: '400 11px var(--kw-mono)' }}>loading build...</div>
@@ -146,6 +289,14 @@ export default function BuildEditPage() {
         </FormSection>
         <FormSection title="builder's notes.">
           <textarea value={form.builder_notes || ''} onChange={e => set('builder_notes', e.target.value)} rows={6} style={{ width: '100%', padding: '10px 12px', borderRadius: 6, background: KW.surface2, border: `1px solid ${KW.surface3}`, color: KW.text, font: '400 11px/1.6 var(--kw-mono)', outline: 'none', resize: 'vertical' }} />
+        </FormSection>
+        <FormSection title="photos.">
+          <div style={{ display: 'grid', gridTemplateColumns: 'var(--kw-grid-photos)', gap: 10, marginBottom: 10 }}>
+            {photos.map((p, i) => <PhotoSlot key={i} photo={p} index={i} onAdd={addPhoto} onRemove={removePhoto} />)}
+          </div>
+          <div style={{ font: '400 10px var(--kw-mono)', color: KW.text4, textAlign: 'right' }}>
+            {photos.filter(Boolean).length} / 6 photos added · click a photo to replace · jpg, png, webp, or gif · 5MB max each
+          </div>
         </FormSection>
         {error && <div style={{ font: '400 10px var(--kw-mono)', color: KW.pink, textAlign: 'right', marginBottom: 8 }}>{error}</div>}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>

@@ -209,6 +209,7 @@ Supabase SQL editor note:
 - [x] Build photo lightbox closes when clicking the backdrop and hides gallery controls for single-photo builds.
 - [x] Add manual staff-pick SQL fields so featured builds are staff-selected only.
 - [x] Show uploaded build photos on homepage/archive cards with procedural art fallback.
+- [x] Allow owners to add, replace, and remove build photos from the build edit page.
 - [ ] Run `supabase/phase2_2_staff_picks.sql` manually in the Supabase SQL Editor.
 
 ## Manual Moderation QA
