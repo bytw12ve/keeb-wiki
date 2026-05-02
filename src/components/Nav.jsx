@@ -1,5 +1,5 @@
 /* built by twelve. — bytw12ve */
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { KW } from '../tokens.js'
 import Logo from './Logo.jsx'
@@ -17,6 +17,7 @@ export default function Nav() {
   const location = useLocation();
   const { user, profile, signOut } = useAuth();
   const [accountOpen, setAccountOpen] = useState(false);
+  const accountCloseTimer = useRef(null);
 
   const activeKey = location.pathname === "/" ? "home"
     : location.pathname.startsWith("/builds") ? "builds"
@@ -27,6 +28,14 @@ export default function Nav() {
     : location.pathname.startsWith("/submit-wiki") ? "submit"
     : null;
   const displayName = profile?.username || user?.user_metadata?.username || user?.email?.split('@')[0]
+  const openAccount = () => {
+    window.clearTimeout(accountCloseTimer.current)
+    setAccountOpen(true)
+  }
+  const closeAccountSoon = () => {
+    window.clearTimeout(accountCloseTimer.current)
+    accountCloseTimer.current = window.setTimeout(() => setAccountOpen(false), 180)
+  }
   const textLinkStyle = (isActive) => ({
     font: `${isActive ? 700 : 400} 11px var(--kw-mono)`,
     color: isActive ? KW.lavender : KW.text3,
@@ -67,16 +76,18 @@ export default function Nav() {
         })}
         {user && displayName ? (
           <div
-            onMouseEnter={() => setAccountOpen(true)}
-            onMouseLeave={() => setAccountOpen(false)}
-            onFocus={() => setAccountOpen(true)}
+            onMouseEnter={openAccount}
+            onMouseLeave={closeAccountSoon}
+            onFocus={openAccount}
             onBlur={(e) => {
-              if (!e.currentTarget.contains(e.relatedTarget)) setAccountOpen(false)
+              if (!e.currentTarget.contains(e.relatedTarget)) closeAccountSoon()
             }}
             style={{ position: 'relative' }}
           >
             <button
-              onClick={() => navigate('/profile')}
+              type="button"
+              aria-haspopup="menu"
+              aria-expanded={accountOpen}
               style={{
                 background: KW.surface2,
                 border: `1px solid ${activeKey === 'profile' || accountOpen ? KW.surface3 : KW.border}`,
@@ -84,45 +95,50 @@ export default function Nav() {
                 padding: '6px 9px',
                 color: KW.lavender,
                 font: '700 10px var(--kw-mono)',
-                cursor: 'pointer',
+                cursor: 'default',
                 boxShadow: accountOpen ? '0 8px 18px rgba(0,0,0,.18)' : 'none',
               }}
             >
               logged in as {displayName}.
             </button>
             {accountOpen && (
-              <div style={{
-                position: 'absolute',
-                right: 0,
-                top: 'calc(100% + 8px)',
-                zIndex: 20,
-                minWidth: 132,
-                background: KW.surface,
-                border: `1px solid ${KW.border}`,
-                borderRadius: 8,
-                padding: 6,
-                boxShadow: '0 12px 24px rgba(0,0,0,.24)',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 2,
-              }}>
-                <button
-                  onClick={() => navigate('/profile')}
-                  style={{ background: 'transparent', border: 'none', borderRadius: 6, color: KW.text3, cursor: 'pointer', font: '400 11px var(--kw-mono)', padding: '8px 10px', textAlign: 'left' }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = KW.text}
-                  onMouseLeave={(e) => e.currentTarget.style.color = KW.text3}
-                >
-                  profile.
-                </button>
-                <button
-                  onClick={async () => { await signOut(); navigate('/') }}
-                  style={{ background: 'transparent', border: 'none', borderRadius: 6, color: KW.text3, cursor: 'pointer', font: '400 11px var(--kw-mono)', padding: '8px 10px', textAlign: 'left' }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = KW.pink}
-                  onMouseLeave={(e) => e.currentTarget.style.color = KW.text3}
-                >
-                  logout.
-                </button>
-              </div>
+              <>
+                <div style={{ position: 'absolute', right: 0, top: '100%', width: '100%', height: 10 }} />
+                <div role="menu" style={{
+                  position: 'absolute',
+                  right: 0,
+                  top: 'calc(100% + 8px)',
+                  zIndex: 20,
+                  minWidth: 132,
+                  background: KW.surface,
+                  border: `1px solid ${KW.border}`,
+                  borderRadius: 8,
+                  padding: 6,
+                  boxShadow: '0 12px 24px rgba(0,0,0,.24)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 2,
+                }}>
+                  <button
+                    role="menuitem"
+                    onClick={() => navigate('/profile')}
+                    style={{ background: 'transparent', border: 'none', borderRadius: 6, color: KW.text3, cursor: 'pointer', font: '400 11px var(--kw-mono)', padding: '8px 10px', textAlign: 'left' }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = KW.text}
+                    onMouseLeave={(e) => e.currentTarget.style.color = KW.text3}
+                  >
+                    profile.
+                  </button>
+                  <button
+                    role="menuitem"
+                    onClick={async () => { await signOut(); navigate('/') }}
+                    style={{ background: 'transparent', border: 'none', borderRadius: 6, color: KW.text3, cursor: 'pointer', font: '400 11px var(--kw-mono)', padding: '8px 10px', textAlign: 'left' }}
+                    onMouseEnter={(e) => e.currentTarget.style.color = KW.pink}
+                    onMouseLeave={(e) => e.currentTarget.style.color = KW.text3}
+                  >
+                    logout.
+                  </button>
+                </div>
+              </>
             )}
           </div>
         ) : (

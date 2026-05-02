@@ -124,7 +124,7 @@ Supabase SQL editor note:
 - `src/components/Tag.jsx` uses `tagKind()` and `TINT` for colored tag pills.
 - Active nav link detection uses `useLocation()` with `startsWith` checks.
 - Signed-in nav should use one far-right `logged in as {username}.` account control; do not also show a separate `profile.` nav link.
-- The signed-in account control should click through to `/profile` and expose `profile.` plus `logout.` from a compact hover/focus bubble.
+- The signed-in account control should open/hold a compact hover/focus bubble with `profile.` plus `logout.`; the account control itself should not navigate.
 - Usernames are created during signup but should not be self-editable from `/profile` in Phase 2.1.
 - Wiki search state uses `useSearchParams`, so `?q=...` is shareable.
 - Wiki category browsing uses `?category=...`.
@@ -210,7 +210,9 @@ Supabase SQL editor note:
 - Email OTP expiration is set to 3600 seconds.
 - Email OTP length is set to 8 digits.
 - Minimum password length should be 8 characters; the app also validates this on signup.
-- Google OAuth app UI and Supabase client flow are wired; dashboard provider credentials must still be configured before production use.
+- Google OAuth app UI and Supabase client flow are wired.
+- Supabase Google provider toggle is enabled, but Client IDs and Client Secret still need Google Cloud OAuth credentials.
+- Google Cloud OAuth should register Supabase callback URL: `https://yxucqsofablzsgyeyrmb.supabase.co/auth/v1/callback`.
 - Cloudflare Turnstile is blocked until a public site key exists and Supabase captcha protection is configured.
 - Leaked Password Protection is still disabled unless it can be enabled on the current Supabase plan.
 - No password-change UI exists yet, so secure password-change dashboard toggles do not have app UI in this phase.

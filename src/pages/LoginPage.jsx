@@ -94,7 +94,13 @@ export default function LoginPage() {
     setSubmitting(true)
     const result = await signInWithGoogle(authRedirectPath)
     setSubmitting(false)
-    if (result.error) setError(result.error.message || 'could not start google login.')
+    if (result.error) {
+      const message = result.error.message || ''
+      const setupMissing = /provider|oauth|client|secret|unsupported|disabled/i.test(message)
+      setError(setupMissing
+        ? 'google login is enabled in the app, but the oauth credentials still need to be finished in supabase.'
+        : message || 'could not start google login.')
+    }
   }
 
   return (
