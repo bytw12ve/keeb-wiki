@@ -1,3 +1,4 @@
+/* built by twelve. — bytw12ve */
 import { TINT, tagKind } from '../tokens.js'
 
 export default function Tag({ children, kind }) {

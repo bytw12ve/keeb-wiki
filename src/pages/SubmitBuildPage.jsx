@@ -6,6 +6,10 @@ import Footer from '../components/Footer.jsx'
 import Button from '../components/Button.jsx'
 import { supabase } from '../lib/supabase.js'
 
+/* built by twelve. — bytw12ve */
+
+const MAX_PHOTO_SIZE = 5 * 1024 * 1024
+const MAX_AUDIO_SIZE = 10 * 1024 * 1024
 const LAYOUTS = ['40%','60%','65%','75%','TKL','WKL','Full']
 const MATERIALS = ['Aluminum','Polycarbonate','Steel','Brass','Carbon Fiber','POM','Acrylic']
 const PLATES = ['Aluminum','Brass','Polycarbonate','FR4','Carbon Fiber','POM','PE','Copper']
@@ -139,6 +143,7 @@ export default function SubmitBuildPage() {
   const navigate = useNavigate()
   const [submitting, setSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [error, setError] = useState('')
 
   const [form, setForm] = useState({
     name: '', layout: '', case_material: '', case_color: '',
@@ -153,6 +158,11 @@ export default function SubmitBuildPage() {
   const toggleArr = (k, v) => setForm(f => ({ ...f, [k]: f[k].includes(v) ? f[k].filter(x => x !== v) : [...f[k], v] }))
 
   const addPhoto = (file, idx) => {
+    if (file.size > MAX_PHOTO_SIZE) {
+      setError('photos must be 5MB or smaller.')
+      return
+    }
+    setError('')
     const preview = URL.createObjectURL(file)
     setPhotos(p => { const next = [...p]; next[idx] = { file, preview }; return next })
   }
@@ -162,7 +172,12 @@ export default function SubmitBuildPage() {
 
   const handleSubmit = async () => {
     if (!form.name) return
+    if (photos.some(photo => photo?.file?.size > MAX_PHOTO_SIZE)) {
+      setError('photos must be 5MB or smaller.')
+      return
+    }
     setSubmitting(true)
+    setError('')
     try {
       const photoUrls = []
       for (const photo of photos) {
@@ -184,6 +199,7 @@ export default function SubmitBuildPage() {
       setSuccess(true)
     } catch (e) {
       console.error(e)
+      setError('something went wrong submitting this build.')
     }
     setSubmitting(false)
   }
@@ -255,7 +271,7 @@ export default function SubmitBuildPage() {
                 <div style={{ display: 'flex', gap: 3 }}>
                   {[4,6,8,5,7,4,6].map((h, i) => <div key={i} style={{ width: 3, height: h, background: KW.text4, borderRadius: 2 }} />)}
                 </div>
-                <span style={{ font: '400 10px var(--kw-mono)', color: KW.text4 }}>upload a sound test — mp3, wav, or youtube link — optional</span>
+                <span style={{ font: '400 10px var(--kw-mono)', color: KW.text4 }}>sound tests support mp3/wav up to {MAX_AUDIO_SIZE / 1024 / 1024}MB or a youtube link</span>
               </div>
             </Field>
           </div>
@@ -287,11 +303,16 @@ export default function SubmitBuildPage() {
             {photos.map((p, i) => <PhotoSlot key={i} photo={p} index={i} onAdd={addPhoto} onRemove={removePhoto} />)}
           </div>
           <div style={{ font: '400 10px var(--kw-mono)', color: KW.text4, textAlign: 'right' }}>
-            {photoCount} / 6 photos added
+            {photoCount} / 6 photos added · 5MB max each
           </div>
         </FormSection>
 
         {/* Actions */}
+        {error && (
+          <div style={{ font: '400 10px var(--kw-mono)', color: KW.pink, textAlign: 'right', marginBottom: 10 }}>
+            {error}
+          </div>
+        )}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, paddingTop: 8 }}>
           <button style={{ height: 33, padding: '0 18px', borderRadius: 6, background: 'transparent', border: `1px solid ${KW.surface3}`, color: KW.text3, font: '400 11px var(--kw-mono)', cursor: 'pointer' }}>
             save draft

@@ -3,7 +3,10 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { KW } from '../tokens.js'
 import Nav from '../components/Nav.jsx'
 import Footer from '../components/Footer.jsx'
+import Tag from '../components/Tag.jsx'
 import { fetchWikiArticleBySlug, fetchWikiArticles } from '../lib/supabase.js'
+
+/* built by twelve. — bytw12ve */
 
 const CATEGORY_META = {
   'beginner-guides': { label: 'beginner', color: KW.blue, bg: '#1F2D3A' },
@@ -143,6 +146,11 @@ export default function WikiArticlePage() {
   const catMeta = CATEGORY_META[article.category] || { label: article.category, color: KW.text3, bg: KW.surface2 }
   const sections = article.content || []
   const isCombined = article.format === 'combined'
+  const tagLabels = new Set([article.category, catMeta.label].map(t => String(t).toLowerCase()))
+  const uniqueTags = (article.tags || []).filter((t, i, arr) => {
+    const normalized = String(t).toLowerCase()
+    return !tagLabels.has(normalized) && arr.findIndex(x => String(x).toLowerCase() === normalized) === i
+  })
 
   return (
     <div style={{ background: KW.bg, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -159,6 +167,15 @@ export default function WikiArticlePage() {
       <div style={{ flex: 1, padding: '24px 40px 40px', display: 'grid', gridTemplateColumns: '1fr 260px', gap: 32, alignItems: 'start' }}>
         {/* Main content */}
         <div>
+          <button
+            onClick={() => navigate('/wiki')}
+            style={{ font: '400 10px var(--kw-mono)', color: KW.text3, background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: 14 }}
+            onMouseEnter={(e) => e.currentTarget.style.color = KW.text}
+            onMouseLeave={(e) => e.currentTarget.style.color = KW.text3}
+          >
+            ← back to wiki
+          </button>
+
           {/* Breadcrumb */}
           <div style={{ font: '400 10px var(--kw-mono)', color: KW.text3, marginBottom: 14, display: 'flex', gap: 8, alignItems: 'center' }}>
             <span style={{ cursor: 'pointer' }} onClick={() => navigate('/wiki')}
@@ -176,8 +193,8 @@ export default function WikiArticlePage() {
             <span style={{ background: catMeta.bg, color: catMeta.color, font: '700 9px var(--kw-mono)', padding: '0 8px', borderRadius: 20, height: 16, lineHeight: '16px', display: 'inline-flex', alignItems: 'center' }}>
               {catMeta.label}
             </span>
-            {article.tags?.map((t, i) => (
-              <span key={i} style={{ background: KW.surface2, color: KW.text3, font: '700 9px var(--kw-mono)', padding: '0 8px', borderRadius: 20, height: 16, lineHeight: '16px', display: 'inline-flex', alignItems: 'center' }}>{t}</span>
+            {uniqueTags.map((t, i) => (
+              <Tag key={i}>{t}</Tag>
             ))}
             {article.read_time && (
               <span style={{ font: '400 10px var(--kw-mono)', color: KW.text4 }}>{article.read_time}</span>
@@ -250,14 +267,8 @@ export default function WikiArticlePage() {
             </div>
           )}
 
-          {/* Prev / next */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 32, paddingTop: 20, borderTop: `1px solid ${KW.border}` }}>
-            <button
-              onClick={() => navigate('/wiki')}
-              style={{ font: '400 10px var(--kw-mono)', color: KW.text3, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
-              onMouseEnter={(e) => e.currentTarget.style.color = KW.text}
-              onMouseLeave={(e) => e.currentTarget.style.color = KW.text3}
-            >← back to wiki</button>
+          {/* Next article */}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 32, paddingTop: 20, borderTop: `1px solid ${KW.border}` }}>
             {related[0] && (
               <button
                 onClick={() => navigate(`/wiki/${related[0].slug}`)}

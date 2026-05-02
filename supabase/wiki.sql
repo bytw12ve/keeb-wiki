@@ -1,4 +1,5 @@
 -- keeb.wiki — wiki_articles table schema + seed
+-- built by twelve. — bytw12ve
 -- Run in Supabase SQL Editor: https://supabase.com/dashboard/project/yxucqsofablzsgyeyrmb/sql
 
 -- ── 1. Table ─────────────────────────────────────────────────────
@@ -26,15 +27,18 @@ ALTER TABLE public.wiki_articles ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "wiki_read_published" ON public.wiki_articles;
 CREATE POLICY "wiki_read_published" ON public.wiki_articles
-  FOR SELECT USING (status = 'published');
+  FOR SELECT TO anon, authenticated USING (status = 'published');
 
 DROP POLICY IF EXISTS "wiki_insert" ON public.wiki_articles;
 CREATE POLICY "wiki_insert" ON public.wiki_articles
-  FOR INSERT WITH CHECK (status IN ('draft','pending'));
+  FOR INSERT TO anon, authenticated WITH CHECK (status IN ('draft','pending'));
 
 -- ── 3. updated_at trigger ────────────────────────────────────────
 CREATE OR REPLACE FUNCTION public.set_updated_at()
-RETURNS TRIGGER LANGUAGE plpgsql AS $$
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
 BEGIN NEW.updated_at = NOW(); RETURN NEW; END;
 $$;
 

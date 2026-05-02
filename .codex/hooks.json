@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "'/Users/jaycee/Documents/GitHub/keeb-wiki/.codex/hooks/session-start.sh'"
+          }
+        ]
+      }
+    ]
+  }
+}

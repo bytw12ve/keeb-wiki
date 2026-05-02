@@ -1,4 +1,7 @@
+import { Link } from 'react-router-dom'
 import { KW } from '../tokens.js'
+
+/* built by twelve. — bytw12ve */
 
 export default function Footer() {
   return (
@@ -13,8 +16,11 @@ export default function Footer() {
         <span style={{ color: KW.text4 }}>community archive, est. 2026</span>
       </div>
       <div style={{ display: "flex", gap: 16 }}>
-        {["about.", "submit.", "wiki.", "rss."].map(l => (
-          <span key={l} style={{ cursor: "pointer" }}>{l}</span>
+        {[
+          ['submit.', '/submit'],
+          ['wiki.', '/wiki'],
+        ].map(([label, to]) => (
+          <Link key={label} to={to} style={{ cursor: "pointer", color: 'inherit', textDecoration: 'none' }}>{label}</Link>
         ))}
       </div>
     </div>

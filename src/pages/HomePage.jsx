@@ -1,17 +1,15 @@
+/* built by twelve. — bytw12ve */
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { KW } from '../tokens.js'
 import Nav from '../components/Nav.jsx'
 import Footer from '../components/Footer.jsx'
 import Tag from '../components/Tag.jsx'
-import Pill from '../components/Pill.jsx'
 import Button from '../components/Button.jsx'
 import Input from '../components/Input.jsx'
 import KeebArt from '../components/KeebArt.jsx'
 import Toast, { flashToast } from '../components/Toast.jsx'
 import { fetchBuilds, getArt, getLayoutCode, getBuildTags, buildSlug } from '../lib/supabase.js'
-
-const FILTER_PILLS = ['all','60%','65%','75%','TKL','linear','tactile','clicky','budget','endgame']
 
 function Hero({ q, setQ, onSearch }) {
   return (
@@ -126,6 +124,66 @@ function SectionHeader({ title, eyebrow, right }) {
   )
 }
 
+function WikiFeature({ onBrowse, onSubmit, onTopic }) {
+  const [hover, setHover] = useState(null)
+  const topics = [
+    ['beginner guides', 'layouts, switches, first boards', 'beginner-guides'],
+    ['modding guides', 'lube, films, foam, tuning', 'modding-guides'],
+    ['sound & feel', 'mounts, plates, sound profiles', 'sound-feel'],
+  ]
+
+  return (
+    <div style={{
+      background: KW.surface, border: `1px solid ${KW.border}`, borderRadius: 8,
+      padding: 22, display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: 18,
+      alignItems: 'stretch', marginBottom: 36,
+    }}>
+      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: 18 }}>
+        <div>
+          <div style={{ font: '700 9px var(--kw-mono)', color: KW.lavender, letterSpacing: '.22em', textTransform: 'uppercase', marginBottom: 10 }}>wiki.</div>
+          <div style={{ font: '700 22px/1.2 var(--kw-mono)', color: KW.text, marginBottom: 10 }}>learn the hobby while you browse.</div>
+          <div style={{ font: '400 11px/1.7 var(--kw-mono)', color: KW.text3, maxWidth: 520 }}>
+            The wiki turns build details into plain-language guides: what parts do, why boards sound different, and how to make smarter buying and modding choices.
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <Button onClick={onBrowse}>browse wiki →</Button>
+          <button
+            onClick={onSubmit}
+            onMouseEnter={() => setHover('submit')}
+            onMouseLeave={() => setHover(null)}
+            style={{
+              height: 33, padding: '0 16px', borderRadius: 6,
+              border: `1px solid ${hover === 'submit' ? KW.lavender : KW.surface3}`,
+              background: hover === 'submit' ? KW.surface2 : 'transparent',
+              color: hover === 'submit' ? KW.lavender : KW.text3,
+              font: '700 10px var(--kw-mono)', cursor: 'pointer',
+              transition: 'all .18s',
+            }}
+          >
+            submit article
+          </button>
+        </div>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 8 }}>
+        {topics.map(([title, desc, category], i) => (
+          <button key={title} onClick={() => onTopic(category)} style={{
+            background: KW.surface2, border: `1px solid ${KW.surface3}`, borderRadius: 8,
+            padding: 14, display: 'flex', justifyContent: 'space-between', gap: 12,
+            alignItems: 'center', cursor: 'pointer', textAlign: 'left',
+          }}>
+            <div>
+              <div style={{ font: '700 11px var(--kw-mono)', color: i === 0 ? KW.blue : i === 1 ? KW.lavender : KW.pink, marginBottom: 5 }}>{title}.</div>
+              <div style={{ font: '400 10px/1.5 var(--kw-mono)', color: KW.text3 }}>{desc}</div>
+            </div>
+            <span style={{ font: '700 13px var(--kw-mono)', color: KW.text4 }}>→</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function CTA({ onSubmit }) {
   return (
     <div style={{
@@ -149,7 +207,6 @@ function CTA({ onSubmit }) {
 
 export default function HomePage() {
   const [q, setQ] = useState('')
-  const [filter, setFilter] = useState('all')
   const [builds, setBuilds] = useState([])
   const [loading, setLoading] = useState(true)
   const [filtered, setFiltered] = useState(null) // null = show default sections, array = show filtered results
@@ -174,12 +231,6 @@ export default function HomePage() {
     runFilter('all', q)
   }
 
-  const onFilterPill = (f) => {
-    setFilter(f)
-    if (f === 'all' && !q) { setFiltered(null); return }
-    runFilter(f, q)
-  }
-
   const featured = builds.slice(0, 2)
   const recent = builds.slice(0, 5)
 
@@ -192,14 +243,6 @@ export default function HomePage() {
         <Hero q={q} setQ={setQ} onSearch={onSearch} />
 
         <div style={{ padding: '0 40px 40px' }}>
-          {/* Filter pills */}
-          <SectionHeader title="browse by." eyebrow="filter" />
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 36 }}>
-            {FILTER_PILLS.map(p => (
-              <Pill key={p} active={filter === p} onClick={() => onFilterPill(p)}>{p}</Pill>
-            ))}
-          </div>
-
           {/* Filtered results */}
           {filtered !== null ? (
             <>
@@ -207,7 +250,7 @@ export default function HomePage() {
                 title={`${filtered.length} build${filtered.length !== 1 ? 's' : ''} found.`}
                 eyebrow="results"
                 right={
-                  <button onClick={() => { setFiltered(null); setFilter('all'); setQ('') }} style={{
+                  <button onClick={() => { setFiltered(null); setQ('') }} style={{
                     background: 'none', border: 'none', font: '400 10px var(--kw-mono)',
                     color: KW.text3, cursor: 'pointer', padding: 0
                   }}>clear ×</button>
@@ -232,6 +275,13 @@ export default function HomePage() {
                   : featured.map((b, i) => <FeaturedCard key={b.id || i} b={b} onClick={() => goToBuild(b)} />)
                 }
               </div>
+
+              <SectionHeader title="wiki knowledge base." eyebrow="learn" />
+              <WikiFeature
+                onBrowse={() => navigate('/wiki')}
+                onSubmit={() => navigate('/submit-wiki')}
+                onTopic={(category) => navigate(`/wiki?category=${category}`)}
+              />
 
               {/* Recent builds */}
               <SectionHeader title="recent builds." eyebrow="just submitted"

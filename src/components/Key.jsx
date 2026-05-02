@@ -1,3 +1,4 @@
+/* built by twelve. — bytw12ve */
 import { KW } from '../tokens.js'
 
 export default function Key({ children, size = "default", color }) {

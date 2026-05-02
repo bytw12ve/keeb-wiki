@@ -1,3 +1,4 @@
+/* built by twelve. — bytw12ve */
 import { useState, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { KW } from '../tokens.js'
@@ -130,15 +131,81 @@ function SearchResultRow({ article, onClick, isFirst, isLast }) {
   )
 }
 
+function ArticleStack({ articles, onArticleClick }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+      {articles.map((a, i) => (
+        <SearchResultRow
+          key={a.id}
+          article={a}
+          isFirst={i === 0}
+          isLast={i === articles.length - 1}
+          onClick={() => onArticleClick(a)}
+        />
+      ))}
+    </div>
+  )
+}
+
+function SubmitWikiCallout({ onClick }) {
+  const [hover, setHover] = useState(false)
+  return (
+    <div
+      style={{
+        background: KW.surface,
+        border: `1px solid ${hover ? KW.lavender : KW.border}`,
+        borderRadius: 8,
+        padding: 20,
+        marginTop: 40,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 20,
+        transition: 'border-color .18s',
+      }}
+    >
+      <div>
+        <div style={{ font: '700 12px var(--kw-mono)', color: KW.lavender, marginBottom: 8 }}>submit a wiki article.</div>
+        <div style={{ font: '400 11px/1.6 var(--kw-mono)', color: KW.text3, maxWidth: 560 }}>
+          Got a guide, glossary entry, or buying advice that would help the community? Send it in for review.
+        </div>
+      </div>
+      <button
+        onClick={onClick}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+        style={{
+          height: 33,
+          padding: '0 16px',
+          borderRadius: 6,
+          border: `1px solid ${hover ? KW.lavender : KW.surface3}`,
+          background: hover ? KW.lavender : KW.surface2,
+          color: hover ? KW.bg : KW.text2,
+          font: '700 10px var(--kw-mono)',
+          cursor: 'pointer',
+          whiteSpace: 'nowrap',
+          transition: 'all .18s',
+        }}
+      >
+        submit article →
+      </button>
+    </div>
+  )
+}
+
 export default function WikiPage() {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
   const searchQ = searchParams.get('q') || ''
+  const categoryQ = searchParams.get('category') || ''
+  const activeSection = SECTIONS.find(s => s.dbKey === categoryQ)
   const [q, setQ] = useState(searchQ)
   const [searchResults, setSearchResults] = useState(null)
   const [searching, setSearching] = useState(false)
   const [recentArticles, setRecentArticles] = useState([])
   const [recentLoading, setRecentLoading] = useState(true)
+  const [categoryArticles, setCategoryArticles] = useState([])
+  const [categoryLoading, setCategoryLoading] = useState(false)
 
   useEffect(() => {
     fetchWikiArticles({ limit: 6 }).then(({ data }) => {
@@ -158,6 +225,19 @@ export default function WikiPage() {
       setSearchResults(null)
     }
   }, [searchQ])
+
+  useEffect(() => {
+    if (!activeSection || searchQ) {
+      setCategoryArticles([])
+      setCategoryLoading(false)
+      return
+    }
+    setCategoryLoading(true)
+    fetchWikiArticles({ category: activeSection.dbKey }).then(({ data }) => {
+      setCategoryArticles(data)
+      setCategoryLoading(false)
+    })
+  }, [activeSection, searchQ])
 
   const handleSearch = () => {
     if (q.trim()) setSearchParams({ q: q.trim() })
@@ -207,16 +287,39 @@ export default function WikiPage() {
               <div style={{ font: '400 11px var(--kw-mono)', color: KW.text4 }}>no articles found. try a different search.</div>
             )}
             {!searching && searchResults?.length > 0 && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                {searchResults.map((a, i) => (
-                  <SearchResultRow
-                    key={a.id} article={a}
-                    isFirst={i === 0} isLast={i === searchResults.length - 1}
-                    onClick={() => navigate(`/wiki/${a.slug}`)}
-                  />
-                ))}
+              <ArticleStack articles={searchResults} onArticleClick={(a) => navigate(`/wiki/${a.slug}`)} />
+            )}
+            <SubmitWikiCallout onClick={() => navigate('/submit-wiki')} />
+          </>
+        ) : activeSection ? (
+          <>
+            <button
+              onClick={() => setSearchParams({})}
+              style={{ font: '400 10px var(--kw-mono)', color: KW.text3, background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: 18 }}
+              onMouseEnter={(e) => e.currentTarget.style.color = KW.text}
+              onMouseLeave={(e) => e.currentTarget.style.color = KW.text3}
+            >
+              ← all wiki sections
+            </button>
+            <div style={{ background: KW.surface, border: `1px solid ${KW.border}`, borderRadius: 8, padding: 22, marginBottom: 18 }}>
+              <div style={{ font: '700 9px var(--kw-mono)', color: activeSection.color, letterSpacing: '.18em', textTransform: 'uppercase', marginBottom: 10 }}>
+                wiki section
+              </div>
+              <h2 style={{ font: '700 24px/1.2 var(--kw-mono)', color: KW.text, margin: '0 0 10px' }}>{activeSection.title}</h2>
+              <div style={{ font: '400 12px/1.6 var(--kw-mono)', color: KW.text3, maxWidth: 760 }}>{activeSection.desc}</div>
+            </div>
+            <div style={{ font: '700 11px var(--kw-mono)', color: KW.text, letterSpacing: '.08em', textTransform: 'uppercase', marginBottom: 16 }}>
+              {categoryLoading ? 'loading articles...' : `${categoryArticles.length} article${categoryArticles.length === 1 ? '' : 's'}`}
+            </div>
+            {!categoryLoading && categoryArticles.length > 0 && (
+              <ArticleStack articles={categoryArticles} onArticleClick={(a) => navigate(`/wiki/${a.slug}`)} />
+            )}
+            {!categoryLoading && categoryArticles.length === 0 && (
+              <div style={{ background: KW.surface, border: `1px solid ${KW.border}`, borderRadius: 8, padding: 18, font: '400 11px var(--kw-mono)', color: KW.text4 }}>
+                no published articles in this section yet.
               </div>
             )}
+            <SubmitWikiCallout onClick={() => navigate('/submit-wiki')} />
           </>
         ) : (
           <>
@@ -226,7 +329,7 @@ export default function WikiPage() {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 40 }}>
               {SECTIONS.map(s => (
-                <SectionCard key={s.key} s={s} onClick={() => navigate(`/wiki?category=${s.dbKey}`)} />
+                <SectionCard key={s.key} s={s} onClick={() => setSearchParams({ category: s.dbKey })} />
               ))}
             </div>
 
@@ -270,6 +373,7 @@ export default function WikiPage() {
             ) : (
               <div style={{ font: '400 11px var(--kw-mono)', color: KW.text4 }}>no articles yet.</div>
             )}
+            <SubmitWikiCallout onClick={() => navigate('/submit-wiki')} />
           </>
         )}
       </div>

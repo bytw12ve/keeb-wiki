@@ -1,3 +1,4 @@
+/* built by twelve. — bytw12ve */
 import { KW } from '../tokens.js'
 
 export default function Button({ children, variant = "primary", onClick, size = "md", style }) {

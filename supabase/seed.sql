@@ -1,4 +1,5 @@
 -- keeb.wiki — builds table schema + seed
+-- built by twelve. — bytw12ve
 -- Run this in your Supabase SQL Editor: https://supabase.com/dashboard/project/yxucqsofablzsgyeyrmb/sql
 
 -- ── 1. Create table ──────────────────────────────────────────────
@@ -34,21 +35,63 @@ CREATE TABLE IF NOT EXISTS public.builds (
 ALTER TABLE public.builds ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "builds_select" ON public.builds;
-CREATE POLICY "builds_select" ON public.builds FOR SELECT USING (true);
+CREATE POLICY "builds_select" ON public.builds
+  FOR SELECT TO anon, authenticated USING (true);
 
 DROP POLICY IF EXISTS "builds_insert" ON public.builds;
-CREATE POLICY "builds_insert" ON public.builds FOR INSERT WITH CHECK (true);
+CREATE POLICY "builds_insert" ON public.builds
+  FOR INSERT TO anon, authenticated WITH CHECK (
+    name IS NOT NULL
+    AND char_length(trim(name)) BETWEEN 1 AND 120
+    AND (rating IS NULL OR rating BETWEEN 1 AND 10)
+    AND coalesce(array_length(photos, 1), 0) <= 6
+  );
 
 -- ── 3. Storage bucket for photos ─────────────────────────────────
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('build-photos', 'build-photos', true)
-ON CONFLICT (id) DO NOTHING;
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'build-photos',
+  'build-photos',
+  true,
+  5242880,
+  ARRAY['image/jpeg','image/png','image/webp','image/gif']
+)
+ON CONFLICT (id) DO UPDATE SET
+  public = EXCLUDED.public,
+  file_size_limit = EXCLUDED.file_size_limit,
+  allowed_mime_types = EXCLUDED.allowed_mime_types;
+
+-- Reserved for Phase 2 audio uploads; limit is applied now so the bucket is safe when enabled.
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES (
+  'build-audio',
+  'build-audio',
+  true,
+  10485760,
+  ARRAY['audio/mpeg','audio/wav','audio/x-wav','audio/mp4','audio/aac','audio/ogg']
+)
+ON CONFLICT (id) DO UPDATE SET
+  public = EXCLUDED.public,
+  file_size_limit = EXCLUDED.file_size_limit,
+  allowed_mime_types = EXCLUDED.allowed_mime_types;
 
 DROP POLICY IF EXISTS "photos_select" ON storage.objects;
-CREATE POLICY "photos_select" ON storage.objects FOR SELECT USING (bucket_id = 'build-photos');
 
 DROP POLICY IF EXISTS "photos_insert" ON storage.objects;
-CREATE POLICY "photos_insert" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'build-photos');
+CREATE POLICY "photos_insert" ON storage.objects
+  FOR INSERT TO anon, authenticated WITH CHECK (
+    bucket_id = 'build-photos'
+    AND lower(storage.extension(name)) IN ('jpg','jpeg','png','webp','gif')
+  );
+
+DROP POLICY IF EXISTS "audio_select" ON storage.objects;
+
+DROP POLICY IF EXISTS "audio_insert" ON storage.objects;
+CREATE POLICY "audio_insert" ON storage.objects
+  FOR INSERT TO anon, authenticated WITH CHECK (
+    bucket_id = 'build-audio'
+    AND lower(storage.extension(name)) IN ('mp3','wav','m4a','aac','ogg')
+  );
 
 -- ── 4. Seed data — 15 builds ──────────────────────────────────────
 INSERT INTO public.builds

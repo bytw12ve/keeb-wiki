@@ -8,6 +8,8 @@ import KeebArt from '../components/KeebArt.jsx'
 import Toast, { flashToast } from '../components/Toast.jsx'
 import { fetchBuildBySlug, getArt, getLayoutCode, getBuildTags } from '../lib/supabase.js'
 
+/* built by twelve. — bytw12ve */
+
 function SpecRow({ k, v, last }) {
   if (!v) return null
   return (
@@ -37,13 +39,13 @@ function SoundTestButton({ onClick }) {
     <button onClick={onClick} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} style={{
       width: '100%', height: 32, borderRadius: 6,
       background: hover ? KW.surface2 : 'transparent',
-      border: `1px solid ${hover ? KW.blue : KW.surface3}`,
-      color: hover ? KW.blue : KW.text3,
+      border: `1px solid ${hover ? KW.lavender : KW.surface3}`,
+      color: hover ? KW.lavender : KW.text3,
       font: '700 10px var(--kw-mono)', cursor: 'pointer',
       display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
       transition: 'all .18s',
     }}>
-      <span style={{ width: 0, height: 0, borderLeft: `6px solid ${hover ? KW.blue : KW.text3}`, borderTop: '4px solid transparent', borderBottom: '4px solid transparent', transition: 'border-color .18s' }} />
+      <span style={{ width: 0, height: 0, borderLeft: `6px solid ${hover ? KW.lavender : KW.text3}`, borderTop: '4px solid transparent', borderBottom: '4px solid transparent', transition: 'border-color .18s' }} />
       youtube sound test →
     </button>
   )
@@ -61,15 +63,49 @@ function SoundGroup({ label, tags, kind }) {
   )
 }
 
-function GalleryTile({ palette, layout, seed }) {
+function GalleryTile({ palette, layout, seed, onClick }) {
   const [hover, setHover] = useState(false)
   return (
-    <div onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} style={{
+    <button onClick={onClick} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} style={{
       paddingTop: '75%', borderRadius: 6, position: 'relative', overflow: 'hidden', cursor: 'pointer',
       border: `1px solid ${hover ? KW.surface3 : 'transparent'}`, transition: 'border-color .18s',
+      background: 'transparent', display: 'block', width: '100%',
     }}>
       <div style={{ position: 'absolute', inset: 0 }}>
         <KeebArt palette={palette} layout={layout} seed={seed} />
+      </div>
+    </button>
+  )
+}
+
+function Lightbox({ photos, index, buildName, onClose, onPrev, onNext, onSelect }) {
+  if (index === null || !photos[index]) return null
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={`${buildName} photo gallery`}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 2000, background: 'rgba(30,27,46,.94)',
+        display: 'grid', gridTemplateRows: '48px 1fr 52px',
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0 20px', borderBottom: `1px solid ${KW.border}` }}>
+        <span style={{ font: '700 10px var(--kw-mono)', color: KW.text3 }}>{index + 1} / {photos.length}</span>
+        <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: 6, border: `1px solid ${KW.surface3}`, background: KW.surface, color: KW.text2, font: '700 14px var(--kw-mono)', cursor: 'pointer' }}>×</button>
+      </div>
+      <div style={{ minHeight: 0, display: 'grid', gridTemplateColumns: '56px 1fr 56px', alignItems: 'center', gap: 12, padding: 20 }}>
+        <button onClick={onPrev} style={{ height: 52, borderRadius: 8, border: `1px solid ${KW.surface3}`, background: KW.surface, color: KW.lavender, font: '700 18px var(--kw-mono)', cursor: 'pointer' }}>‹</button>
+        <img src={photos[index]} alt={`${buildName} photo ${index + 1}`} style={{ width: '100%', height: '100%', objectFit: 'contain', minHeight: 0 }} />
+        <button onClick={onNext} style={{ height: 52, borderRadius: 8, border: `1px solid ${KW.surface3}`, background: KW.surface, color: KW.lavender, font: '700 18px var(--kw-mono)', cursor: 'pointer' }}>›</button>
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6, borderTop: `1px solid ${KW.border}` }}>
+        {photos.map((_, i) => (
+          <button key={i} onClick={() => onSelect(i)} style={{
+            width: i === index ? 18 : 6, height: 6, borderRadius: 6, border: 'none',
+            background: i === index ? KW.lavender : KW.surface3, padding: 0, cursor: 'pointer',
+          }} />
+        ))}
       </div>
     </div>
   )
@@ -83,6 +119,7 @@ export default function DetailsPage() {
   const [build, setBuild] = useState(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(null)
 
   useEffect(() => {
     setLoading(true)
@@ -93,6 +130,20 @@ export default function DetailsPage() {
       setLoading(false)
     })
   }, [slug])
+
+  const photos = build?.photos?.filter(Boolean) || []
+  const hasPhotos = photos.length > 0
+
+  useEffect(() => {
+    if (lightboxIndex === null || !hasPhotos) return
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') setLightboxIndex(null)
+      if (e.key === 'ArrowLeft') setLightboxIndex(i => (i + photos.length - 1) % photos.length)
+      if (e.key === 'ArrowRight') setLightboxIndex(i => (i + 1) % photos.length)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [lightboxIndex, hasPhotos, photos.length])
 
   if (loading) return (
     <div style={{ background: KW.bg, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -118,6 +169,7 @@ export default function DetailsPage() {
   const tags = getBuildTags(build)
   const art = getArt(build)
   const layoutCode = getLayoutCode(build.layout)
+  const galleryItems = hasPhotos ? photos : GALLERY_PALETTES
   const specs = [
     ['layout', build.layout],
     ['case', build.case_material],
@@ -156,9 +208,9 @@ export default function DetailsPage() {
         </div>
 
         {/* Hero image */}
-        <div style={{ height: 280, marginBottom: 18, borderRadius: 10, overflow: 'hidden' }}>
-          {build.photos && build.photos.length > 0
-            ? <img src={build.photos[0]} alt={build.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        <div onClick={() => hasPhotos && setLightboxIndex(0)} style={{ height: 280, marginBottom: 18, borderRadius: 10, overflow: 'hidden', cursor: hasPhotos ? 'zoom-in' : 'default' }}>
+          {hasPhotos
+            ? <img src={photos[0]} alt={build.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
             : <KeebArt palette={art} layout={layoutCode} seed={11} />
           }
         </div>
@@ -189,10 +241,10 @@ export default function DetailsPage() {
             )}
           </Bubble>
 
-          <Bubble title="sound & feel profile." titleColor={KW.pink}>
-            <SoundGroup label="SOUND SIGNATURE" tags={build.sound_signature} kind="materials" />
-            <SoundGroup label="TYPING FEEL" tags={build.typing_feel} kind="materials" />
-            {build.sound_level && <SoundGroup label="SOUND LEVEL" tags={[build.sound_level]} kind="switches" />}
+          <Bubble title="sound & feel profile." titleColor={KW.lavender}>
+            <SoundGroup label="SOUND SIGNATURE" tags={build.sound_signature} kind="layout" />
+            <SoundGroup label="TYPING FEEL" tags={build.typing_feel} kind="layout" />
+            {build.sound_level && <SoundGroup label="SOUND LEVEL" tags={[build.sound_level]} kind="layout" />}
             <div style={{ marginTop: 4 }}>
               <SoundTestButton onClick={() => flashToast('→ youtube sound test')} />
             </div>
@@ -206,19 +258,28 @@ export default function DetailsPage() {
             <div style={{ font: '700 16px var(--kw-mono)', color: KW.text }}>build gallery.</div>
           </div>
           <span style={{ font: '400 10px var(--kw-mono)', color: KW.text3 }}>
-            {build.photos && build.photos.length > 0 ? `${build.photos.length} photos` : '6 placeholder photos'} · click to expand
+            {hasPhotos ? `${photos.length} photos` : 'procedural previews'}
           </span>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-          {(build.photos && build.photos.length > 0 ? build.photos : GALLERY_PALETTES).map((item, i) => (
+          {galleryItems.map((item, i) => (
             typeof item === 'string' && item.startsWith('http')
-              ? <div key={i} style={{ paddingTop: '75%', position: 'relative', borderRadius: 6, overflow: 'hidden' }}>
-                  <img src={item} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                </div>
+              ? <button key={i} onClick={() => setLightboxIndex(i)} style={{ paddingTop: '75%', position: 'relative', borderRadius: 6, overflow: 'hidden', border: 'none', background: 'transparent', cursor: 'zoom-in' }}>
+                  <img src={item} alt={`${build.name} photo ${i + 1}`} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                </button>
               : <GalleryTile key={i} palette={item} layout={layoutCode} seed={i * 7 + 3} />
           ))}
         </div>
       </div>
+      <Lightbox
+        photos={photos}
+        index={lightboxIndex}
+        buildName={build.name}
+        onClose={() => setLightboxIndex(null)}
+        onPrev={() => setLightboxIndex(i => (i + photos.length - 1) % photos.length)}
+        onNext={() => setLightboxIndex(i => (i + 1) % photos.length)}
+        onSelect={setLightboxIndex}
+      />
       <Footer />
       <Toast />
     </div>
