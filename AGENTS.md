@@ -74,6 +74,7 @@ Auth/profile helpers:
 - `getSessionUser()`
 - `signUp({ email, password, username })`
 - `signIn({ email, password })`
+- `signInWithGoogle()`
 - `signOut()`
 - `fetchProfile(id)`
 - `upsertProfile({ id, username })`
@@ -179,9 +180,10 @@ Supabase SQL editor note:
 - [x] Allow owners to preview their own pending/rejected non-deleted builds and wiki submissions from `/profile`.
 - [x] Keep public build/wiki browsing and search published-only.
 - [x] Block signup passwords shorter than 8 characters before calling Supabase.
-- [ ] Commit the current Phase 2 foundation.
-- [ ] Add Google OAuth login after QA passes.
-- [ ] Add Cloudflare Turnstile to sign up and login.
+- [x] Commit the current Phase 2 foundation.
+- [x] Add Google OAuth login after QA passes.
+- [ ] Configure Google provider credentials and redirect URLs in the Supabase dashboard.
+- [ ] Add Cloudflare Turnstile to sign up and login after the Turnstile site key and Supabase captcha settings are available.
 - [ ] Enable Supabase Leaked Password Protection in the dashboard.
 - [ ] Configure production auth email later after the real domain is ready.
 - [ ] Production domain target is `keebwiki.com`; email sender is temporary until that domain is acquired/configured.
@@ -208,6 +210,8 @@ Supabase SQL editor note:
 - Email OTP expiration is set to 3600 seconds.
 - Email OTP length is set to 8 digits.
 - Minimum password length should be 8 characters; the app also validates this on signup.
+- Google OAuth app UI and Supabase client flow are wired; dashboard provider credentials must still be configured before production use.
+- Cloudflare Turnstile is blocked until a public site key exists and Supabase captcha protection is configured.
 - Leaked Password Protection is still disabled unless it can be enabled on the current Supabase plan.
 - No password-change UI exists yet, so secure password-change dashboard toggles do not have app UI in this phase.
 

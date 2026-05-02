@@ -36,7 +36,7 @@ function TextInput({ value, onChange, type = 'text', placeholder }) {
 }
 
 export default function LoginPage() {
-  const { user, signIn, signUp } = useAuth()
+  const { user, signIn, signUp, signInWithGoogle } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [mode, setMode] = useState('login')
@@ -47,6 +47,7 @@ export default function LoginPage() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const from = location.state?.from || '/profile'
+  const authRedirectPath = String(from || '').startsWith('/') ? from : '/profile'
 
   if (user) return <Navigate to={from} replace />
 
@@ -86,6 +87,16 @@ export default function LoginPage() {
     navigate(from, { replace: true })
   }
 
+  const handleGoogle = async () => {
+    if (submitting) return
+    setError('')
+    setMessage('')
+    setSubmitting(true)
+    const result = await signInWithGoogle(authRedirectPath)
+    setSubmitting(false)
+    if (result.error) setError(result.error.message || 'could not start google login.')
+  }
+
   return (
     <div style={{ background: KW.bg, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Nav />
@@ -98,6 +109,14 @@ export default function LoginPage() {
             {mode === 'signup'
               ? 'make a profile so your builds and articles belong to you. passwords need at least 8 characters.'
               : 'log in to submit, edit, and manage your keeb.wiki posts.'}
+          </div>
+          <Button variant="secondary" onClick={handleGoogle} disabled={submitting} style={{ width: '100%', marginBottom: 16 }}>
+            continue with google.
+          </Button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+            <div style={{ height: 1, background: KW.border, flex: 1 }} />
+            <span style={{ font: '400 9px var(--kw-mono)', color: KW.text4 }}>or</span>
+            <div style={{ height: 1, background: KW.border, flex: 1 }} />
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {mode === 'signup' && (

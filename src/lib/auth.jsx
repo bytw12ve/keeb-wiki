@@ -8,6 +8,22 @@ function defaultUsername(email) {
   return String(email || '').split('@')[0].toLowerCase().replace(/[^a-z0-9_]+/g, '_').replace(/^_|_$/g, '').slice(0, 24)
 }
 
+function fallbackUsername(user) {
+  const base = defaultUsername(user?.user_metadata?.username || user?.email || user?.id || 'member')
+  if (base.length >= 3) return base
+  return `member_${String(user?.id || '').replace(/-/g, '').slice(0, 8) || 'user'}`
+}
+
+async function createFallbackProfile(user) {
+  const base = fallbackUsername(user)
+  const first = await upsertProfile({ id: user.id, username: base })
+  if (!first.error) return first.data || null
+  const suffix = String(user.id || '').replace(/-/g, '').slice(0, 6)
+  const username = `${base.slice(0, Math.max(3, 23 - suffix.length))}_${suffix}`.slice(0, 24)
+  const retry = await upsertProfile({ id: user.id, username })
+  return retry.data || null
+}
+
 export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
   const [user, setUser] = useState(null)
@@ -24,20 +40,32 @@ export function AuthProvider({ children }) {
     return data
   }
 
+  const ensureProfile = async (currentUser = user) => {
+    if (!currentUser) {
+      setProfile(null)
+      return null
+    }
+    const existing = await refreshProfile(currentUser)
+    if (existing) return existing
+    const created = await createFallbackProfile(currentUser)
+    setProfile(created)
+    return created
+  }
+
   useEffect(() => {
     let active = true
     supabase.auth.getSession().then(async ({ data }) => {
       if (!active) return
       setSession(data.session || null)
       setUser(data.session?.user || null)
-      if (data.session?.user) await refreshProfile(data.session.user)
+      if (data.session?.user) await ensureProfile(data.session.user)
       setLoading(false)
     })
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setSession(nextSession || null)
       setUser(nextSession?.user || null)
-      if (nextSession?.user) refreshProfile(nextSession.user)
+      if (nextSession?.user) ensureProfile(nextSession.user)
       else setProfile(null)
       setLoading(false)
     })
@@ -72,16 +100,15 @@ export function AuthProvider({ children }) {
     if (result.data.session) setSession(result.data.session)
     if (result.data.user) {
       setUser(result.data.user)
-      let nextProfile = await refreshProfile(result.data.user)
-      if (!nextProfile) {
-        const fallbackUsername = result.data.user.user_metadata?.username || defaultUsername(result.data.user.email)
-        const { data } = await upsertProfile({ id: result.data.user.id, username: fallbackUsername })
-        nextProfile = data || null
-        setProfile(nextProfile)
-      }
+      await ensureProfile(result.data.user)
     }
     return result
   }
+
+  const signInWithGoogle = (redirectPath = '/profile') => supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: `${window.location.origin}${redirectPath}` },
+  })
 
   const signOut = async () => {
     const result = await supabase.auth.signOut()
@@ -98,6 +125,7 @@ export function AuthProvider({ children }) {
     loading,
     signUp,
     signIn,
+    signInWithGoogle,
     signOut,
     refreshProfile,
   }), [session, user, profile, loading])
