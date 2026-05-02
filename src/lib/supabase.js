@@ -63,7 +63,12 @@ function cleanSearchTerm(value) {
 
 function isMissingPhase2Column(error) {
   const msg = `${error?.message || ''} ${error?.details || ''}`
-  return msg.includes('deleted_at') || msg.includes('status') || msg.includes('user_id')
+  return msg.includes('deleted_at')
+    || msg.includes('status')
+    || msg.includes('user_id')
+    || msg.includes('is_staff_pick')
+    || msg.includes('staff_pick_order')
+    || msg.includes('staff_picked_at')
 }
 
 function applyBuildFilters(query, q, filter) {
@@ -107,6 +112,22 @@ export async function fetchBuilds({ q = '', filter = 'all' } = {}) {
     query = supabase.from('builds').select('*').order('created_at', { ascending: false })
     ;({ data, error } = await applyBuildFilters(query, q, filter))
   }
+  return { data: data || [], error }
+}
+
+export async function fetchStaffPickBuilds({ limit = 2 } = {}) {
+  let query = supabase
+    .from('builds')
+    .select('*')
+    .eq('is_staff_pick', true)
+    .is('deleted_at', null)
+    .or('status.eq.published,status.is.null')
+    .order('staff_pick_order', { ascending: true, nullsFirst: false })
+    .order('staff_picked_at', { ascending: false, nullsFirst: false })
+    .limit(limit)
+
+  let { data, error } = await query
+  if (error && isMissingPhase2Column(error)) return { data: [], error: null }
   return { data: data || [], error }
 }
 

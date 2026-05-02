@@ -7,9 +7,9 @@ import Footer from '../components/Footer.jsx'
 import Tag from '../components/Tag.jsx'
 import Button from '../components/Button.jsx'
 import Input from '../components/Input.jsx'
-import KeebArt from '../components/KeebArt.jsx'
-import Toast, { flashToast } from '../components/Toast.jsx'
-import { fetchBuilds, getArt, getLayoutCode, getBuildTags, buildRouteSlug } from '../lib/supabase.js'
+import BuildVisual from '../components/BuildVisual.jsx'
+import Toast from '../components/Toast.jsx'
+import { fetchBuilds, fetchStaffPickBuilds, getBuildTags, buildRouteSlug } from '../lib/supabase.js'
 
 function Hero({ q, setQ, onSearch, buildCount }) {
   return (
@@ -38,6 +38,8 @@ function Hero({ q, setQ, onSearch, buildCount }) {
 function FeaturedCard({ b, onClick }) {
   const [hover, setHover] = useState(false)
   const tags = getBuildTags(b)
+  const submittedBy = b.submitted_by || 'community builder'
+  const summary = b.description || b.builder_notes
   return (
     <div onClick={onClick} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} style={{
       background: KW.surface, border: `1px solid ${hover ? KW.surface3 : KW.border}`,
@@ -45,21 +47,25 @@ function FeaturedCard({ b, onClick }) {
       transition: 'border-color .18s, box-shadow .18s',
       boxShadow: hover ? `0 4px 24px rgba(0,0,0,.3)` : 'none',
     }}>
-      <div style={{ height: 168 }}><KeebArt palette={getArt(b)} layout={getLayoutCode(b.layout)} seed={b.name.length} /></div>
+      <div style={{ height: 168 }}><BuildVisual build={b} seed={(b.name || '').length} /></div>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12 }}>
         <div style={{ font: '700 16px var(--kw-mono)', color: KW.text }}>{b.name}</div>
         <div style={{ font: '400 10px var(--kw-mono)', color: KW.text4 }}>
-          by <span style={{ color: KW.text3 }}>{b.submitted_by}</span>
+          by <span style={{ color: KW.text3 }}>{submittedBy}</span>
         </div>
       </div>
-      {b.description && <div style={{ font: '400 11px/1.7 var(--kw-mono)', color: KW.text2 }}>{b.description}</div>}
+      {summary && <div style={{ font: '400 11px/1.7 var(--kw-mono)', color: KW.text2 }}>{summary}</div>}
       <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
         {tags.map((t, i) => <Tag key={i}>{t}</Tag>)}
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, borderTop: `1px solid ${KW.border}` }}>
-        <span style={{ font: '400 10px var(--kw-mono)', color: KW.text3 }}>
-          rated <span style={{ color: KW.text }}>{b.rating}/10</span> by builder
-        </span>
+        {b.rating ? (
+          <span style={{ font: '400 10px var(--kw-mono)', color: KW.text3 }}>
+            rated <span style={{ color: KW.text }}>{b.rating}/10</span> by builder
+          </span>
+        ) : (
+          <span style={{ font: '400 10px var(--kw-mono)', color: KW.text3 }}>staff selected</span>
+        )}
         <span style={{ font: '700 11px var(--kw-mono)', color: hover ? KW.text : KW.lavender, transition: 'color .18s' }}>
           view full build →
         </span>
@@ -71,6 +77,7 @@ function FeaturedCard({ b, onClick }) {
 function RecentCard({ b, onClick }) {
   const [hover, setHover] = useState(false)
   const tags = getBuildTags(b)
+  const submittedBy = b.submitted_by || 'community builder'
   return (
     <div onClick={onClick} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} style={{
       background: KW.surface, border: `1px solid ${hover ? KW.surface3 : KW.border}`,
@@ -78,11 +85,11 @@ function RecentCard({ b, onClick }) {
       transition: 'border-color .18s, box-shadow .18s',
       boxShadow: hover ? `0 4px 16px rgba(0,0,0,.25)` : 'none',
     }}>
-      <div style={{ height: 96 }}><KeebArt palette={getArt(b)} layout={getLayoutCode(b.layout)} seed={b.name.length * 3} /></div>
+      <div style={{ height: 96 }}><BuildVisual build={b} seed={(b.name || '').length * 3} /></div>
       <div style={{ font: '700 12px var(--kw-mono)', color: KW.text }}>{b.name}</div>
       <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>{tags.map((t, i) => <Tag key={i}>{t}</Tag>)}</div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: 6 }}>
-        <span style={{ font: '400 9px var(--kw-mono)', color: KW.text4 }}>{b.submitted_by}</span>
+        <span style={{ font: '400 9px var(--kw-mono)', color: KW.text4 }}>{submittedBy}</span>
         <span style={{ font: '700 10px var(--kw-mono)', color: hover ? KW.text : KW.lavender, transition: 'color .18s' }}>view build →</span>
       </div>
     </div>
@@ -92,6 +99,7 @@ function RecentCard({ b, onClick }) {
 function BuildCard({ b, onClick }) {
   const [hover, setHover] = useState(false)
   const tags = getBuildTags(b)
+  const submittedBy = b.submitted_by || 'community builder'
   return (
     <div onClick={onClick} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} style={{
       background: KW.surface, border: `1px solid ${hover ? KW.surface3 : KW.border}`,
@@ -100,13 +108,37 @@ function BuildCard({ b, onClick }) {
       boxShadow: hover ? `0 4px 16px rgba(0,0,0,.25)` : 'none',
     }}>
       <div style={{ height: 100, position: 'relative' }}>
-        <KeebArt palette={getArt(b)} layout={getLayoutCode(b.layout)} seed={b.name.length * 5} />
+        <BuildVisual build={b} seed={(b.name || '').length * 5} />
       </div>
       <div style={{ font: '700 12px var(--kw-mono)', color: KW.text }}>{b.name}</div>
       <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>{tags.map((t, i) => <Tag key={i}>{t}</Tag>)}</div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
-        <span style={{ font: '400 9px var(--kw-mono)', color: KW.text4 }}>{b.submitted_by}</span>
+        <span style={{ font: '400 9px var(--kw-mono)', color: KW.text4 }}>{submittedBy}</span>
         <span style={{ font: '700 10px var(--kw-mono)', color: hover ? KW.text : KW.lavender, transition: 'color .18s' }}>view build →</span>
+      </div>
+    </div>
+  )
+}
+
+function StaffPicksEmpty() {
+  return (
+    <div style={{
+      gridColumn: '1 / -1',
+      background: KW.surface,
+      border: `1px dashed ${KW.surface3}`,
+      borderRadius: 8,
+      minHeight: 180,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 24,
+      textAlign: 'center',
+    }}>
+      <div>
+        <div style={{ font: '700 13px var(--kw-mono)', color: KW.text, marginBottom: 8 }}>staff picks are being curated.</div>
+        <div style={{ font: '400 11px/1.7 var(--kw-mono)', color: KW.text3, maxWidth: 420 }}>
+          published community builds stay in recent builds and the archive until staff manually features them.
+        </div>
       </div>
     </div>
   )
@@ -208,13 +240,15 @@ function CTA({ onSubmit }) {
 export default function HomePage() {
   const [q, setQ] = useState('')
   const [builds, setBuilds] = useState([])
+  const [featured, setFeatured] = useState([])
   const [loading, setLoading] = useState(true)
   const [filtered, setFiltered] = useState(null) // null = show default sections, array = show filtered results
   const navigate = useNavigate()
 
   useEffect(() => {
-    fetchBuilds().then(({ data }) => {
+    Promise.all([fetchBuilds(), fetchStaffPickBuilds()]).then(([{ data }, staffPicks]) => {
       setBuilds(data)
+      setFeatured(staffPicks.data)
       setLoading(false)
     })
   }, [])
@@ -231,7 +265,6 @@ export default function HomePage() {
     runFilter('all', q)
   }
 
-  const featured = builds.slice(0, 2)
   const recent = builds.slice(0, 5)
 
   const goToBuild = (b) => navigate(`/builds/${buildRouteSlug(b)}`)
@@ -268,11 +301,13 @@ export default function HomePage() {
             <>
               {/* Featured builds */}
               <SectionHeader title="featured builds." eyebrow="staff picks"
-                right={<span style={{ font: '400 10px var(--kw-mono)', color: KW.text3 }}>2 of the week</span>} />
+                right={<span style={{ font: '400 10px var(--kw-mono)', color: KW.text3 }}>{featured.length} picked</span>} />
               <div style={{ display: 'grid', gridTemplateColumns: 'var(--kw-grid-featured)', gap: 14, marginBottom: 36 }}>
                 {loading
                   ? [0,1].map(i => <div key={i} style={{ height: 320, background: KW.surface, borderRadius: 8, border: `1px solid ${KW.border}` }} />)
-                  : featured.map((b, i) => <FeaturedCard key={b.id || i} b={b} onClick={() => goToBuild(b)} />)
+                  : featured.length > 0
+                    ? featured.map((b, i) => <FeaturedCard key={b.id || i} b={b} onClick={() => goToBuild(b)} />)
+                    : <StaffPicksEmpty />
                 }
               </div>
 

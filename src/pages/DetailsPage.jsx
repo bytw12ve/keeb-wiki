@@ -78,15 +78,22 @@ function Lightbox({ photos, index, buildName, onClose, onPrev, onNext, onSelect 
         <span style={{ font: '700 10px var(--kw-mono)', color: KW.text3 }}>{index + 1} / {photos.length}</span>
         <button onClick={onClose} style={{ width: 30, height: 30, borderRadius: 6, border: `1px solid ${KW.surface3}`, background: KW.surface, color: KW.text2, font: '700 14px var(--kw-mono)', cursor: 'pointer' }}>×</button>
       </div>
-      <div onClick={(e) => e.stopPropagation()} style={{ minHeight: 0, display: 'grid', gridTemplateColumns: hasMultiplePhotos ? '56px 1fr 56px' : '1fr', alignItems: 'center', gap: 12, padding: 20 }}>
-        {hasMultiplePhotos && <button onClick={onPrev} style={{ height: 52, borderRadius: 8, border: `1px solid ${KW.surface3}`, background: KW.surface, color: KW.lavender, font: '700 18px var(--kw-mono)', cursor: 'pointer' }}>‹</button>}
-        <img src={photos[index]} alt={`${buildName} photo ${index + 1}`} style={{ width: '100%', height: '100%', objectFit: 'contain', minHeight: 0 }} />
-        {hasMultiplePhotos && <button onClick={onNext} style={{ height: 52, borderRadius: 8, border: `1px solid ${KW.surface3}`, background: KW.surface, color: KW.lavender, font: '700 18px var(--kw-mono)', cursor: 'pointer' }}>›</button>}
+      <div style={{ minHeight: 0, display: 'grid', gridTemplateColumns: hasMultiplePhotos ? '56px 1fr 56px' : '1fr', alignItems: 'center', gap: 12, padding: 20 }}>
+        {hasMultiplePhotos && <button onClick={(e) => { e.stopPropagation(); onPrev() }} style={{ height: 52, borderRadius: 8, border: `1px solid ${KW.surface3}`, background: KW.surface, color: KW.lavender, font: '700 18px var(--kw-mono)', cursor: 'pointer' }}>‹</button>}
+        <div style={{ minHeight: 0, height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <img
+            onClick={(e) => e.stopPropagation()}
+            src={photos[index]}
+            alt={`${buildName} photo ${index + 1}`}
+            style={{ maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto', objectFit: 'contain', display: 'block' }}
+          />
+        </div>
+        {hasMultiplePhotos && <button onClick={(e) => { e.stopPropagation(); onNext() }} style={{ height: 52, borderRadius: 8, border: `1px solid ${KW.surface3}`, background: KW.surface, color: KW.lavender, font: '700 18px var(--kw-mono)', cursor: 'pointer' }}>›</button>}
       </div>
       {hasMultiplePhotos && (
         <div onClick={(e) => e.stopPropagation()} style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 6, borderTop: `1px solid ${KW.border}` }}>
           {photos.map((_, i) => (
-            <button key={i} onClick={() => onSelect(i)} style={{
+            <button key={i} onClick={(e) => { e.stopPropagation(); onSelect(i) }} style={{
               width: i === index ? 18 : 6, height: 6, borderRadius: 6, border: 'none',
               background: i === index ? KW.lavender : KW.surface3, padding: 0, cursor: 'pointer',
             }} />

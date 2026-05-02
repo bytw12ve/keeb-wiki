@@ -58,6 +58,7 @@ Do not change the color palette or font unless explicitly requested.
 
 Build helpers:
 - `fetchBuilds({ q, filter })`
+- `fetchStaffPickBuilds({ limit })`
 - `fetchBuildBySlug(slug)`
 - `getArt(build)`
 - `getLayoutCode(layout)`
@@ -94,6 +95,7 @@ Notes:
 - Existing seeded rows with `user_id = null` are legacy/system-owned content and are not editable by normal users.
 - `getArt(build)` falls back to palette inference from `case_material`.
 - `fetchBuildBySlug(slug)` uses exact slug plus fuzzy name fallback.
+- Homepage staff picks are explicit manual/admin selections. Published community builds must not automatically become featured.
 
 ## Supabase
 
@@ -104,12 +106,14 @@ SQL files must be run manually in the Supabase SQL Editor.
 - `supabase/security_fixes.sql` applies Security Advisor fixes for existing projects.
 - `supabase/phase2_auth.sql` adds profiles, ownership fields, pending moderation, soft deletes, authenticated inserts, and user-scoped storage policies.
 - `supabase/phase2_1_rls_hardening.sql` prevents regular users from publishing their own submissions through direct client updates and adds `rejected` wiki status support.
+- `supabase/phase2_2_staff_picks.sql` adds manual staff-pick fields and blocks normal authenticated users from changing them.
 
 Important columns:
 - `builds.user_id` references `auth.users(id)` for user-owned posts.
 - `builds.status` values: `pending`, `published`, `rejected`.
 - `builds.deleted_at` implements soft delete.
 - `builds.photos` stores public Supabase Storage URLs.
+- `builds.is_staff_pick`, `builds.staff_pick_order`, and `builds.staff_picked_at` are staff/admin-controlled homepage featuring fields.
 - `builds.sound_signature` and `builds.typing_feel` are text arrays.
 - `wiki_articles.user_id` references `auth.users(id)` for user-owned posts.
 - `wiki_articles.deleted_at` implements soft delete.
@@ -123,6 +127,7 @@ Supabase SQL editor note:
 ## Components And Conventions
 
 - `src/components/KeebArt.jsx` renders procedural keyboard art. It accepts `palette`, `layout`, and `seed`.
+- `src/components/BuildVisual.jsx` renders the first uploaded build photo when available and falls back to `KeebArt`.
 - `src/components/Tag.jsx` uses `tagKind()` and `TINT` for colored tag pills.
 - Active nav link detection uses `useLocation()` with `startsWith` checks.
 - Signed-in nav should use one far-right `logged in as {username}.` account control; do not also show a separate `profile.` nav link.
@@ -199,9 +204,12 @@ Supabase SQL editor note:
 - [x] Replace native profile delete confirms with in-app confirmation UI.
 - [x] Revoke local build photo preview URLs when removed or on submit-page unmount.
 - [x] Improve submit error messages for duplicate wiki titles and common submission failures.
-- [ ] Run `supabase/phase2_1_rls_hardening.sql` manually in the Supabase SQL Editor.
+- [x] Run `supabase/phase2_1_rls_hardening.sql` manually in the Supabase SQL Editor.
 - [x] Build owner preview links from `/profile` return back to `/profile`.
 - [x] Build photo lightbox closes when clicking the backdrop and hides gallery controls for single-photo builds.
+- [x] Add manual staff-pick SQL fields so featured builds are staff-selected only.
+- [x] Show uploaded build photos on homepage/archive cards with procedural art fallback.
+- [ ] Run `supabase/phase2_2_staff_picks.sql` manually in the Supabase SQL Editor.
 
 ## Manual Moderation QA
 
@@ -228,6 +236,36 @@ WHERE id = 'PASTE_BUILD_UUID_HERE'
 ```
 
 After approval, verify the owner preview banner disappears, the build appears on `/builds`, and a signed-out user can open its detail URL.
+
+## Manual Staff Pick QA
+
+Until the staff/admin UI exists, homepage staff picks are managed manually in the Supabase SQL Editor. A published build is not featured unless staff explicitly marks it.
+
+Mark a published build as a staff pick:
+
+```sql
+UPDATE public.builds
+SET is_staff_pick = TRUE,
+    staff_pick_order = 1,
+    staff_picked_at = NOW(),
+    updated_at = NOW()
+WHERE id = 'PASTE_BUILD_UUID_HERE'
+  AND status = 'published'
+  AND deleted_at IS NULL;
+```
+
+Remove a staff pick:
+
+```sql
+UPDATE public.builds
+SET is_staff_pick = FALSE,
+    staff_pick_order = NULL,
+    staff_picked_at = NULL,
+    updated_at = NOW()
+WHERE id = 'PASTE_BUILD_UUID_HERE';
+```
+
+After staff-pick changes, verify the build appears or disappears from homepage `featured builds.` without affecting `/builds` or homepage `recent builds.`
 
 ## Phase 2 QA Notes
 
@@ -256,6 +294,7 @@ After approval, verify the owner preview banner disappears, the build appears on
 ## Later Phase 2
 
 - [ ] Small staff moderation flow for accepting/rejecting submitted builds and wiki articles.
+- [ ] Staff/admin UI for selecting and ordering homepage staff picks.
 - [ ] Owner-visible rejected feedback/reason fields for builds and wiki articles.
 - [ ] Lightweight empty/error states across profile, builds, wiki search, and details pages.
 - [ ] Comments on builds and wiki articles

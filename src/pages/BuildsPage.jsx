@@ -8,15 +8,16 @@ import Tag from '../components/Tag.jsx'
 import Pill from '../components/Pill.jsx'
 import Button from '../components/Button.jsx'
 import Input from '../components/Input.jsx'
-import KeebArt from '../components/KeebArt.jsx'
+import BuildVisual from '../components/BuildVisual.jsx'
 import Toast from '../components/Toast.jsx'
-import { fetchBuilds, getArt, getLayoutCode, getBuildTags, buildRouteSlug } from '../lib/supabase.js'
+import { fetchBuilds, getBuildTags, buildRouteSlug } from '../lib/supabase.js'
 
 const BUILDS_FILTERS = ['all','60%','65%','75%','TKL','linear','tactile','clicky','brass','aluminum','polycarbonate','WKL']
 
 function GridBuildCard({ b, onClick }) {
   const [hover, setHover] = useState(false)
   const tags = getBuildTags(b)
+  const submittedBy = b.submitted_by || 'community builder'
   return (
     <div onClick={onClick} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} style={{
       background: KW.surface, border: `1px solid ${hover ? KW.lavender : KW.border}`,
@@ -25,7 +26,7 @@ function GridBuildCard({ b, onClick }) {
       boxShadow: hover ? `0 4px 20px rgba(0,0,0,.3)` : 'none',
     }}>
       <div style={{ height: 110, position: 'relative' }}>
-        <KeebArt palette={getArt(b)} layout={getLayoutCode(b.layout)} seed={b.name.length * 5} />
+        <BuildVisual build={b} seed={(b.name || '').length * 5} />
         <span style={{
           position: 'absolute', top: 6, right: 6,
           font: '400 9px var(--kw-mono)', color: KW.text3,
@@ -34,7 +35,7 @@ function GridBuildCard({ b, onClick }) {
       </div>
       <div style={{ font: '700 12px var(--kw-mono)', color: KW.text }}>{b.name}</div>
       <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>{tags.map((t, i) => <Tag key={i}>{t}</Tag>)}</div>
-      <div style={{ font: '400 9px var(--kw-mono)', color: KW.text4, marginTop: -2 }}>by {b.submitted_by}</div>
+      <div style={{ font: '400 9px var(--kw-mono)', color: KW.text4, marginTop: -2 }}>by {submittedBy}</div>
       <button style={{
         marginTop: 'auto', height: 26, borderRadius: 6, cursor: 'pointer',
         background: hover ? KW.surface2 : 'transparent',
