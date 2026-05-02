@@ -23,6 +23,14 @@ function parseBuildRouteSlug(value) {
   return { safeSlug, buildId: uuidMatch?.[1] || null }
 }
 
+function storagePathFromBuildPhotoUrl(url, userId) {
+  const marker = '/storage/v1/object/public/build-photos/'
+  const idx = String(url || '').indexOf(marker)
+  if (idx === -1 || !userId) return null
+  const path = decodeURIComponent(String(url).slice(idx + marker.length).split('?')[0])
+  return path.startsWith(`${userId}/`) ? path : null
+}
+
 export function getArt(build) {
   if (build.art) return build.art
   const mat = (build.case_material || '').toLowerCase()
@@ -329,13 +337,40 @@ export async function updateOwnBuild(id, patch) {
   return { data, error }
 }
 
-export async function softDeleteOwnBuild(id) {
-  const { error } = await supabase
+export async function deleteOwnBuild({ id, userId }) {
+  if (!id || !userId) return { data: null, error: new Error('Missing build or user id.') }
+
+  const { data: build, error: fetchError } = await supabase
     .from('builds')
-    .update({ deleted_at: new Date().toISOString() })
+    .select('id,user_id,photos')
     .eq('id', id)
-    .is('deleted_at', null)
-  return { data: null, error }
+    .eq('user_id', userId)
+    .single()
+
+  if (fetchError) return { data: null, error: fetchError }
+  if (!build) return { data: null, error: new Error('Build not found for this account.') }
+
+  const photoPaths = [...new Set((build.photos || [])
+    .map(url => storagePathFromBuildPhotoUrl(url, userId))
+    .filter(Boolean))]
+
+  const { data, error } = await supabase
+    .from('builds')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', userId)
+    .select('id')
+    .maybeSingle()
+
+  if (error) return { data: null, error }
+  if (!data) return { data: null, error: new Error('Build could not be deleted for this account.') }
+
+  if (photoPaths.length > 0) {
+    const { error: storageError } = await supabase.storage.from('build-photos').remove(photoPaths)
+    if (storageError) return { data, error: null, storageError }
+  }
+
+  return { data, error: null, storageError: null }
 }
 
 export async function updateOwnWikiArticle(id, patch) {

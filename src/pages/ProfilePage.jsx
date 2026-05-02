@@ -5,7 +5,7 @@ import { KW } from '../tokens.js'
 import Nav from '../components/Nav.jsx'
 import Footer from '../components/Footer.jsx'
 import { useAuth } from '../lib/auth.jsx'
-import { fetchOwnBuilds, fetchOwnWikiArticles, softDeleteOwnBuild, softDeleteOwnWikiArticle, buildRouteSlug } from '../lib/supabase.js'
+import { fetchOwnBuilds, fetchOwnWikiArticles, deleteOwnBuild, softDeleteOwnWikiArticle, buildRouteSlug } from '../lib/supabase.js'
 
 function StatusPill({ status, deleted }) {
   const label = deleted ? 'deleted' : status || 'published'
@@ -66,7 +66,10 @@ function ConfirmDelete({ target, onCancel, onConfirm, busy }) {
       <div style={{ width: '100%', maxWidth: 420, background: KW.surface, border: `1px solid ${KW.border}`, borderRadius: 8, padding: 20, boxShadow: '0 18px 40px rgba(0,0,0,.34)' }}>
         <div style={{ font: '700 14px var(--kw-mono)', color: KW.text, marginBottom: 8 }}>delete {target.kind}?</div>
         <div style={{ font: '400 11px/1.6 var(--kw-mono)', color: KW.text3, marginBottom: 18 }}>
-          this will remove <span style={{ color: KW.text2 }}>{target.title}</span> from your profile and public pages.
+          {target.kind === 'build'
+            ? <>this will permanently delete <span style={{ color: KW.text2 }}>{target.title}</span> and its photos from the database.</>
+            : <>this will remove <span style={{ color: KW.text2 }}>{target.title}</span> from your profile and public pages.</>
+          }
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
           <button onClick={onCancel} disabled={busy} style={{ height: 30, padding: '0 14px', borderRadius: 6, border: `1px solid ${KW.surface3}`, background: 'transparent', color: KW.text3, font: '400 10px var(--kw-mono)', cursor: busy ? 'default' : 'pointer', opacity: busy ? .6 : 1 }}>cancel</button>
@@ -105,13 +108,17 @@ export default function ProfilePage() {
   const deleteBuild = async (id) => {
     setDeleting(true)
     setDeleteError('')
-    const { error } = await softDeleteOwnBuild(id)
+    const { error, storageError } = await deleteOwnBuild({ id, userId: user.id })
     setDeleting(false)
     if (error) {
-      setDeleteError('could not delete that build. refresh and try again.')
+      setDeleteError('could not permanently delete that build. make sure the Supabase hard-delete SQL has been run, then try again.')
       return
     }
+    setBuilds(items => items.filter(item => item.id !== id))
     setConfirmDelete(null)
+    if (storageError) {
+      setDeleteError('build deleted, but its uploaded photos could not be removed from storage.')
+    }
     await load()
   }
 
