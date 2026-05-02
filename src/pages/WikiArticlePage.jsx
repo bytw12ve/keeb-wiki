@@ -5,6 +5,7 @@ import Nav from '../components/Nav.jsx'
 import Footer from '../components/Footer.jsx'
 import Tag from '../components/Tag.jsx'
 import { fetchWikiArticleBySlug, fetchWikiArticles } from '../lib/supabase.js'
+import { useAuth } from '../lib/auth.jsx'
 
 /* built by twelve. — bytw12ve */
 
@@ -71,6 +72,7 @@ function SectionBubble({ s, id, innerRef }) {
 export default function WikiArticlePage() {
   const { slug } = useParams()
   const navigate = useNavigate()
+  const { user, loading: authLoading } = useAuth()
   const [article, setArticle] = useState(null)
   const [related, setRelated] = useState([])
   const [loading, setLoading] = useState(true)
@@ -80,14 +82,17 @@ export default function WikiArticlePage() {
   const sectionRefs = useRef([])
 
   useEffect(() => {
+    if (authLoading) return
     setLoading(true)
+    setArticle(null)
     sectionRefs.current = []
-    fetchWikiArticleBySlug(slug).then(({ data }) => {
+    fetchWikiArticleBySlug(slug, { ownerId: user?.id }).then(({ data }) => {
       setArticle(data)
       if (data?.content?.length) setActiveSection(sectionSlug(data.content[0].heading))
+      else setActiveSection(null)
       setLoading(false)
     })
-  }, [slug])
+  }, [slug, user?.id, authLoading])
 
   useEffect(() => {
     if (!article) return
@@ -146,6 +151,7 @@ export default function WikiArticlePage() {
   const catMeta = CATEGORY_META[article.category] || { label: article.category, color: KW.text3, bg: KW.surface2 }
   const sections = article.content || []
   const isCombined = article.format === 'combined'
+  const isOwnerPreview = article.user_id === user?.id && article.status && article.status !== 'published'
   const tagLabels = new Set([article.category, catMeta.label].map(t => String(t).toLowerCase()))
   const uniqueTags = (article.tags || []).filter((t, i, arr) => {
     const normalized = String(t).toLowerCase()
@@ -208,6 +214,19 @@ export default function WikiArticlePage() {
           </div>
 
           <h1 style={{ font: '700 28px/1.2 var(--kw-mono)', color: KW.text, margin: '0 0 10px' }}>{article.title}.</h1>
+          {isOwnerPreview && (
+            <div style={{
+              background: KW.surface,
+              border: `1px solid ${KW.surface3}`,
+              borderRadius: 8,
+              padding: '10px 12px',
+              color: KW.lavender,
+              font: '400 10px/1.6 var(--kw-mono)',
+              marginBottom: 16,
+            }}>
+              owner preview: this wiki article is {article.status} and only visible to you while it waits for review.
+            </div>
+          )}
           {article.short_description && (
             <p style={{ font: '400 12px/1.6 var(--kw-mono)', color: KW.text3, margin: '0 0 24px' }}>{article.short_description}</p>
           )}

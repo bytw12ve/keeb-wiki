@@ -72,7 +72,7 @@ Wiki helpers:
 
 Auth/profile helpers:
 - `getSessionUser()`
-- `signUp({ email, password })`
+- `signUp({ email, password, username })`
 - `signIn({ email, password })`
 - `signOut()`
 - `fetchProfile(id)`
@@ -171,13 +171,14 @@ Supabase SQL editor note:
 - [x] Re-run logged-in QA with email confirmation temporarily disabled.
 - [x] Create a test account, submit a test build, submit a test wiki article, edit owned content, and confirm public visibility rules.
 - [x] Update docs for the current Phase 2 foundation.
-- [ ] Update signed-in nav so `logged in as {username}.` is the only profile/account entry, positioned at the far right.
-- [ ] Add a hover/focus account bubble with `profile.` and `logout.` actions.
-- [ ] Remove the duplicate signed-in `profile.` nav link.
-- [ ] Remove username self-editing from `/profile`; show username/email as read-only account info.
-- [ ] Add `view` actions to profile build/wiki rows while keeping edit and delete.
-- [ ] Allow owners to preview their own pending/rejected non-deleted builds and wiki submissions from `/profile`.
-- [ ] Keep public build/wiki browsing and search published-only.
+- [x] Update signed-in nav so `logged in as {username}.` is the only profile/account entry, positioned at the far right.
+- [x] Add a hover/focus account bubble with `profile.` and `logout.` actions.
+- [x] Remove the duplicate signed-in `profile.` nav link.
+- [x] Remove username self-editing from `/profile`; show username/email as read-only account info.
+- [x] Add `view` actions to profile build/wiki rows while keeping edit and delete.
+- [x] Allow owners to preview their own pending/rejected non-deleted builds and wiki submissions from `/profile`.
+- [x] Keep public build/wiki browsing and search published-only.
+- [x] Block signup passwords shorter than 8 characters before calling Supabase.
 - [ ] Commit the current Phase 2 foundation.
 - [ ] Add Google OAuth login after QA passes.
 - [ ] Add Cloudflare Turnstile to sign up and login.
@@ -199,6 +200,16 @@ Supabase SQL editor note:
 - Confirmed the pending QA build does not appear on public `/builds`.
 - Confirmed searching public `/wiki` for the pending QA article returns no results.
 - Did not soft-delete QA content during the visible QA pass because deletes affect Supabase data, even when the records are test records.
+
+## Supabase Auth Safety Notes
+
+- Email provider is enabled.
+- Secure email change is enabled.
+- Email OTP expiration is set to 3600 seconds.
+- Email OTP length is set to 8 digits.
+- Minimum password length should be 8 characters; the app also validates this on signup.
+- Leaked Password Protection is still disabled unless it can be enabled on the current Supabase plan.
+- No password-change UI exists yet, so secure password-change dashboard toggles do not have app UI in this phase.
 
 ## Later Phase 2
 

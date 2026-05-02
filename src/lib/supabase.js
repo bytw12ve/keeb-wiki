@@ -99,7 +99,7 @@ export async function fetchBuilds({ q = '', filter = 'all' } = {}) {
   return { data: data || [], error }
 }
 
-export async function fetchBuildBySlug(slug) {
+export async function fetchBuildBySlug(slug, { ownerId } = {}) {
   const safeSlug = String(slug || '').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 120)
   if (!safeSlug) return { data: null, error: new Error('Invalid build slug') }
   const nameGuess = safeSlug.replace(/-/g, ' ')
@@ -115,6 +115,16 @@ export async function fetchBuildBySlug(slug) {
     ;({ data, error } = await supabase
       .from('builds')
       .select('*')
+      .or(`slug.eq.${safeSlug},name.ilike.${nameGuess}`)
+      .limit(1)
+      .single())
+  }
+  if ((!data || error) && ownerId && !isMissingPhase2Column(error)) {
+    ;({ data, error } = await supabase
+      .from('builds')
+      .select('*')
+      .eq('user_id', ownerId)
+      .is('deleted_at', null)
       .or(`slug.eq.${safeSlug},name.ilike.${nameGuess}`)
       .limit(1)
       .single())
@@ -156,7 +166,7 @@ export async function fetchWikiArticles({ category, status = 'published', limit 
   return { data: data || [], error }
 }
 
-export async function fetchWikiArticleBySlug(slug) {
+export async function fetchWikiArticleBySlug(slug, { ownerId } = {}) {
   const safeSlug = String(slug || '').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 120)
   if (!safeSlug) return { data: null, error: new Error('Invalid article slug') }
   let { data, error } = await supabase
@@ -172,6 +182,15 @@ export async function fetchWikiArticleBySlug(slug) {
       .select('*')
       .eq('slug', safeSlug)
       .eq('status', 'published')
+      .single())
+  }
+  if ((!data || error) && ownerId && !isMissingPhase2Column(error)) {
+    ;({ data, error } = await supabase
+      .from('wiki_articles')
+      .select('*')
+      .eq('slug', safeSlug)
+      .eq('user_id', ownerId)
+      .is('deleted_at', null)
       .single())
   }
   return { data, error }

@@ -6,6 +6,7 @@ import Footer from '../components/Footer.jsx'
 import Tag from '../components/Tag.jsx'
 import KeebArt from '../components/KeebArt.jsx'
 import { fetchBuildBySlug, getArt, getLayoutCode, getBuildTags } from '../lib/supabase.js'
+import { useAuth } from '../lib/auth.jsx'
 
 /* built by twelve. — bytw12ve */
 
@@ -97,20 +98,23 @@ const GALLERY_PALETTES = ['lavender','pink','blue','cream','olive','slate']
 export default function DetailsPage() {
   const { slug } = useParams()
   const navigate = useNavigate()
+  const { user, loading: authLoading } = useAuth()
   const [build, setBuild] = useState(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(null)
 
   useEffect(() => {
+    if (authLoading) return
     setLoading(true)
     setNotFound(false)
-    fetchBuildBySlug(slug).then(({ data, error }) => {
+    setBuild(null)
+    fetchBuildBySlug(slug, { ownerId: user?.id }).then(({ data, error }) => {
       if (error || !data) setNotFound(true)
       else setBuild(data)
       setLoading(false)
     })
-  }, [slug])
+  }, [slug, user?.id, authLoading])
 
   const photos = build?.photos?.filter(Boolean) || []
   const hasPhotos = photos.length > 0
@@ -151,6 +155,7 @@ export default function DetailsPage() {
   const art = getArt(build)
   const layoutCode = getLayoutCode(build.layout)
   const galleryItems = hasPhotos ? photos : GALLERY_PALETTES
+  const isOwnerPreview = build.user_id === user?.id && build.status && build.status !== 'published'
   const specs = [
     ['layout', build.layout],
     ['case', build.case_material],
@@ -187,6 +192,19 @@ export default function DetailsPage() {
           <span style={{ color: KW.text4, margin: '0 8px' }}>·</span>
           <span>{new Date(build.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
         </div>
+        {isOwnerPreview && (
+          <div style={{
+            background: KW.surface,
+            border: `1px solid ${KW.surface3}`,
+            borderRadius: 8,
+            padding: '10px 12px',
+            color: KW.lavender,
+            font: '400 10px/1.6 var(--kw-mono)',
+            marginBottom: 18,
+          }}>
+            owner preview: this build is {build.status} and only visible to you while it waits for review.
+          </div>
+        )}
 
         {/* Hero image */}
         <div onClick={() => hasPhotos && setLightboxIndex(0)} style={{ height: 280, marginBottom: 18, borderRadius: 10, overflow: 'hidden', cursor: hasPhotos ? 'zoom-in' : 'default' }}>

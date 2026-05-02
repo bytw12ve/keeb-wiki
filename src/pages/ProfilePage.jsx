@@ -4,9 +4,8 @@ import { useNavigate } from 'react-router-dom'
 import { KW } from '../tokens.js'
 import Nav from '../components/Nav.jsx'
 import Footer from '../components/Footer.jsx'
-import Button from '../components/Button.jsx'
 import { useAuth } from '../lib/auth.jsx'
-import { fetchOwnBuilds, fetchOwnWikiArticles, softDeleteOwnBuild, softDeleteOwnWikiArticle, upsertProfile, buildSlug } from '../lib/supabase.js'
+import { fetchOwnBuilds, fetchOwnWikiArticles, softDeleteOwnBuild, softDeleteOwnWikiArticle, buildSlug } from '../lib/supabase.js'
 
 function StatusPill({ status, deleted }) {
   const label = deleted ? 'deleted' : status || 'published'
@@ -20,7 +19,7 @@ function StatusPill({ status, deleted }) {
   )
 }
 
-function Row({ title, meta, status, deleted, onEdit, onDelete }) {
+function Row({ title, meta, status, deleted, onView, onEdit, onDelete }) {
   return (
     <div style={{
       background: KW.surface, border: `1px solid ${KW.border}`, borderRadius: 8,
@@ -35,6 +34,7 @@ function Row({ title, meta, status, deleted, onEdit, onDelete }) {
       </div>
       {!deleted && (
         <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={onView} style={{ background: 'transparent', border: `1px solid ${KW.surface3}`, color: KW.lavender, height: 28, padding: '0 12px', borderRadius: 6, font: '400 10px var(--kw-mono)', cursor: 'pointer' }}>view</button>
           <button onClick={onEdit} style={{ background: 'transparent', border: `1px solid ${KW.surface3}`, color: KW.text3, height: 28, padding: '0 12px', borderRadius: 6, font: '400 10px var(--kw-mono)', cursor: 'pointer' }}>edit</button>
           <button onClick={onDelete} style={{ background: 'transparent', border: `1px solid ${KW.surface3}`, color: KW.pink, height: 28, padding: '0 12px', borderRadius: 6, font: '400 10px var(--kw-mono)', cursor: 'pointer' }}>delete</button>
         </div>
@@ -56,14 +56,11 @@ function Section({ title, empty, children }) {
 }
 
 export default function ProfilePage() {
-  const { user, profile, refreshProfile } = useAuth()
+  const { user, profile } = useAuth()
   const navigate = useNavigate()
-  const [username, setUsername] = useState(profile?.username || '')
   const [builds, setBuilds] = useState([])
   const [articles, setArticles] = useState([])
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [error, setError] = useState('')
 
   const load = async () => {
     setLoading(true)
@@ -77,22 +74,8 @@ export default function ProfilePage() {
   }
 
   useEffect(() => {
-    if (profile?.username) setUsername(profile.username)
-  }, [profile])
-
-  useEffect(() => {
     if (user) load()
   }, [user])
-
-  const saveProfile = async () => {
-    if (saving) return
-    setSaving(true)
-    setError('')
-    const { error: err } = await upsertProfile({ id: user.id, username })
-    setSaving(false)
-    if (err) setError(err.message || 'could not save profile.')
-    else refreshProfile(user)
-  }
 
   const deleteBuild = async (id) => {
     if (!window.confirm('Delete this build from your profile and public pages?')) return
@@ -105,6 +88,7 @@ export default function ProfilePage() {
     await softDeleteOwnWikiArticle(id)
     load()
   }
+  const displayName = profile?.username || user?.email?.split('@')[0] || 'member'
 
   return (
     <div style={{ background: KW.bg, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -116,16 +100,20 @@ export default function ProfilePage() {
         </p>
 
         <div style={{ background: KW.surface, border: `1px solid ${KW.border}`, borderRadius: 8, padding: 20, maxWidth: 520 }}>
-          <div style={{ font: '700 11px var(--kw-mono)', color: KW.lavender, marginBottom: 14 }}>username.</div>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <input
-              value={username}
-              onChange={e => setUsername(e.target.value)}
-              style={{ flex: 1, minWidth: 220, height: 33, padding: '0 12px', borderRadius: 6, background: KW.surface2, border: `1px solid ${KW.surface3}`, color: KW.text, font: '400 11px var(--kw-mono)', outline: 'none' }}
-            />
-            <Button onClick={saveProfile} disabled={saving}>{saving ? 'saving...' : 'save'}</Button>
+          <div style={{ font: '700 11px var(--kw-mono)', color: KW.lavender, marginBottom: 14 }}>account.</div>
+          <div style={{ display: 'grid', gap: 8 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, font: '400 11px var(--kw-mono)' }}>
+              <span style={{ color: KW.text3 }}>username</span>
+              <span style={{ color: KW.text }}>{displayName}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, font: '400 11px var(--kw-mono)' }}>
+              <span style={{ color: KW.text3 }}>email</span>
+              <span style={{ color: KW.text2, textAlign: 'right' }}>{user.email}</span>
+            </div>
           </div>
-          {error && <div style={{ marginTop: 10, font: '400 10px var(--kw-mono)', color: KW.pink }}>{error}</div>}
+          <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${KW.border}`, font: '400 10px/1.6 var(--kw-mono)', color: KW.text4 }}>
+            username changes are not self-service yet.
+          </div>
         </div>
 
         {loading ? (
@@ -140,6 +128,7 @@ export default function ProfilePage() {
                   meta={`${b.layout || 'unknown layout'} · ${new Date(b.created_at).toLocaleDateString('en-US')}`}
                   status={b.status}
                   deleted={Boolean(b.deleted_at)}
+                  onView={() => navigate(`/builds/${b.slug || buildSlug(b.name)}`)}
                   onEdit={() => navigate(`/builds/${buildSlug(b.name)}/edit`)}
                   onDelete={() => deleteBuild(b.id)}
                 />
@@ -153,6 +142,7 @@ export default function ProfilePage() {
                   meta={`${a.category} · ${new Date(a.created_at).toLocaleDateString('en-US')}`}
                   status={a.status}
                   deleted={Boolean(a.deleted_at)}
+                  onView={() => navigate(`/wiki/${a.slug}`)}
                   onEdit={() => navigate(`/wiki/${a.slug}/edit`)}
                   onDelete={() => deleteArticle(a.id)}
                 />

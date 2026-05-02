@@ -1,4 +1,5 @@
 /* built by twelve. — bytw12ve */
+import { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { KW } from '../tokens.js'
 import Logo from './Logo.jsx'
@@ -15,6 +16,7 @@ export default function Nav() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, profile, signOut } = useAuth();
+  const [accountOpen, setAccountOpen] = useState(false);
 
   const activeKey = location.pathname === "/" ? "home"
     : location.pathname.startsWith("/builds") ? "builds"
@@ -24,10 +26,13 @@ export default function Nav() {
     : location.pathname.startsWith("/login") ? "login"
     : location.pathname.startsWith("/submit-wiki") ? "submit"
     : null;
-  const authLinks = user
-    ? [{ key: "profile", label: "profile.", path: "/profile" }]
-    : [{ key: "login", label: "login.", path: "/login" }]
   const displayName = profile?.username || user?.user_metadata?.username || user?.email?.split('@')[0]
+  const textLinkStyle = (isActive) => ({
+    font: `${isActive ? 700 : 400} 11px var(--kw-mono)`,
+    color: isActive ? KW.lavender : KW.text3,
+    textDecoration: "none", cursor: "pointer",
+    transition: "color .18s",
+  })
 
   return (
     <div style={{
@@ -47,47 +52,89 @@ export default function Nav() {
         </span>
       </a>
       <div style={{ display: "flex", gap: 18, flexWrap: "wrap", alignItems: "center" }}>
-        {user && displayName && (
-          <button
-            onClick={() => navigate('/profile')}
-            style={{
-              background: KW.surface2,
-              border: `1px solid ${KW.surface3}`,
-              borderRadius: 8,
-              padding: '6px 9px',
-              color: KW.lavender,
-              font: '700 10px var(--kw-mono)',
-              cursor: 'pointer',
-            }}
-          >
-            logged in as {displayName}.
-          </button>
-        )}
-        {[...LINKS, ...authLinks].map(({ key, label, path }) => {
+        {LINKS.map(({ key, label, path }) => {
           const isActive = activeKey === key;
           return (
             <a
               key={key}
               href={path}
               onClick={(e) => { e.preventDefault(); navigate(path); }}
-              style={{
-                font: `${isActive ? 700 : 400} 11px var(--kw-mono)`,
-                color: isActive ? KW.lavender : KW.text3,
-                textDecoration: "none", cursor: "pointer",
-                transition: "color .18s",
-              }}
+              style={textLinkStyle(isActive)}
               onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.color = KW.text; }}
               onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.color = KW.text3; }}
             >{label}</a>
           );
         })}
-        {user && (
-          <button
-            onClick={async () => { await signOut(); navigate('/') }}
-            style={{ background: 'none', border: 'none', padding: 0, font: '400 11px var(--kw-mono)', color: KW.text3, cursor: 'pointer' }}
+        {user && displayName ? (
+          <div
+            onMouseEnter={() => setAccountOpen(true)}
+            onMouseLeave={() => setAccountOpen(false)}
+            onFocus={() => setAccountOpen(true)}
+            onBlur={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget)) setAccountOpen(false)
+            }}
+            style={{ position: 'relative' }}
           >
-            logout.
-          </button>
+            <button
+              onClick={() => navigate('/profile')}
+              style={{
+                background: KW.surface2,
+                border: `1px solid ${activeKey === 'profile' || accountOpen ? KW.surface3 : KW.border}`,
+                borderRadius: 8,
+                padding: '6px 9px',
+                color: KW.lavender,
+                font: '700 10px var(--kw-mono)',
+                cursor: 'pointer',
+                boxShadow: accountOpen ? '0 8px 18px rgba(0,0,0,.18)' : 'none',
+              }}
+            >
+              logged in as {displayName}.
+            </button>
+            {accountOpen && (
+              <div style={{
+                position: 'absolute',
+                right: 0,
+                top: 'calc(100% + 8px)',
+                zIndex: 20,
+                minWidth: 132,
+                background: KW.surface,
+                border: `1px solid ${KW.border}`,
+                borderRadius: 8,
+                padding: 6,
+                boxShadow: '0 12px 24px rgba(0,0,0,.24)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+              }}>
+                <button
+                  onClick={() => navigate('/profile')}
+                  style={{ background: 'transparent', border: 'none', borderRadius: 6, color: KW.text3, cursor: 'pointer', font: '400 11px var(--kw-mono)', padding: '8px 10px', textAlign: 'left' }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = KW.text}
+                  onMouseLeave={(e) => e.currentTarget.style.color = KW.text3}
+                >
+                  profile.
+                </button>
+                <button
+                  onClick={async () => { await signOut(); navigate('/') }}
+                  style={{ background: 'transparent', border: 'none', borderRadius: 6, color: KW.text3, cursor: 'pointer', font: '400 11px var(--kw-mono)', padding: '8px 10px', textAlign: 'left' }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = KW.pink}
+                  onMouseLeave={(e) => e.currentTarget.style.color = KW.text3}
+                >
+                  logout.
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <a
+            href="/login"
+            onClick={(e) => { e.preventDefault(); navigate('/login'); }}
+            style={textLinkStyle(activeKey === 'login')}
+            onMouseEnter={(e) => { if (activeKey !== 'login') e.currentTarget.style.color = KW.text; }}
+            onMouseLeave={(e) => { if (activeKey !== 'login') e.currentTarget.style.color = KW.text3; }}
+          >
+            login.
+          </a>
         )}
       </div>
     </div>

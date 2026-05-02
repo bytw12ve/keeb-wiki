@@ -62,6 +62,10 @@ export default function LoginPage() {
       setError('username must be at least 3 characters.')
       return
     }
+    if (mode === 'signup' && password.length < 8) {
+      setError('password must be at least 8 characters.')
+      return
+    }
     setSubmitting(true)
     const result = mode === 'signup'
       ? await signUp({ email: email.trim(), password, username })
@@ -92,7 +96,7 @@ export default function LoginPage() {
           </div>
           <div style={{ font: '400 11px/1.6 var(--kw-mono)', color: KW.text3, marginBottom: 22 }}>
             {mode === 'signup'
-              ? 'make a profile so your builds and articles belong to you.'
+              ? 'make a profile so your builds and articles belong to you. passwords need at least 8 characters.'
               : 'log in to submit, edit, and manage your keeb.wiki posts.'}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
