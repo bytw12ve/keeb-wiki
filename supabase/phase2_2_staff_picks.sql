@@ -1,5 +1,5 @@
 -- keeb.wiki — Phase 2.2 staff picks
--- built by twelve. — bytw12ve
+-- built by twelve.
 -- Run this manually in the Supabase SQL Editor after phase2_1_rls_hardening.sql.
 
 ALTER TABLE public.builds

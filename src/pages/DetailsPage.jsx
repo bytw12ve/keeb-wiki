@@ -8,7 +8,7 @@ import KeebArt from '../components/KeebArt.jsx'
 import { fetchBuildBySlug, getArt, getLayoutCode, getBuildTags, isStaffProfile } from '../lib/supabase.js'
 import { useAuth } from '../lib/auth.jsx'
 
-/* built by twelve. — bytw12ve */
+/* built by twelve. */
 
 function SpecRow({ k, v, last }) {
   if (!v) return null

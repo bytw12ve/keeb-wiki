@@ -7,7 +7,7 @@ import Button from '../components/Button.jsx'
 import { supabase } from '../lib/supabase.js'
 import { useAuth } from '../lib/auth.jsx'
 
-/* built by twelve. — bytw12ve */
+/* built by twelve. */
 
 const MAX_PHOTO_SIZE = 5 * 1024 * 1024
 const LAYOUTS = ['40%','60%','65%','75%','TKL','WKL','Full']

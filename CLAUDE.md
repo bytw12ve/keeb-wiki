@@ -157,7 +157,7 @@ Supabase SQL editor note:
 - Removed footer RSS/About links.
 - Added Supabase Security Advisor fixes.
 - Added upload limits: 5MB photos, 10MB audio.
-- Added hidden watermark comments: `/* built by twelve. — bytw12ve */`.
+- Added hidden watermark comments: `/* built by twelve. */`.
 - Added wiki category browsing, homepage wiki section, and wiki article submit callouts.
 
 ## Completed Phase 2 Foundation

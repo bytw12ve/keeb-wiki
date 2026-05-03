@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { KW } from '../tokens.js'
 
-/* built by twelve. — bytw12ve */
+/* built by twelve. */
 
 export default function Footer() {
   return (

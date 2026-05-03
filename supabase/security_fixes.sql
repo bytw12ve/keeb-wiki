@@ -1,5 +1,5 @@
 -- keeb.wiki — Security Advisor warning fixes
--- built by twelve. — bytw12ve
+-- built by twelve.
 -- Run this in Supabase SQL Editor after the main schema files.
 
 -- 1. Function Search Path Mutable: pin search_path on the trigger function.

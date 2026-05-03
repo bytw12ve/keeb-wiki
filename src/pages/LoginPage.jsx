@@ -1,4 +1,4 @@
-/* built by twelve. — bytw12ve */
+/* built by twelve. */
 import { useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { KW } from '../tokens.js'

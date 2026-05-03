@@ -1,4 +1,4 @@
-/* built by twelve. — bytw12ve */
+/* built by twelve. */
 import KeebArt from './KeebArt.jsx'
 import { getArt, getLayoutCode } from '../lib/supabase.js'
 

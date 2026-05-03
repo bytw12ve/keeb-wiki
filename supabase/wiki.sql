@@ -1,5 +1,5 @@
 -- keeb.wiki — wiki_articles table schema + seed
--- built by twelve. — bytw12ve
+-- built by twelve.
 -- Run in Supabase SQL Editor: https://supabase.com/dashboard/project/yxucqsofablzsgyeyrmb/sql
 
 -- ── 1. Table ─────────────────────────────────────────────────────

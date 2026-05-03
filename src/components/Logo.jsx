@@ -1,4 +1,4 @@
-/* built by twelve. — bytw12ve */
+/* built by twelve. */
 import { KW, LOGO_COLORS } from '../tokens.js'
 import Key from './Key.jsx'
 

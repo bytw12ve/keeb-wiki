@@ -1,5 +1,5 @@
 -- keeb.wiki — Phase 3.1 Security Advisor fixes
--- built by twelve. — bytw12ve
+-- built by twelve.
 -- Run this manually in the Supabase SQL Editor after phase3_staff_admin.sql.
 
 -- ── Role helpers: keep RLS behavior, avoid exposed SECURITY DEFINER helpers ──

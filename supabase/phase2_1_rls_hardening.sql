@@ -1,5 +1,5 @@
 -- keeb.wiki — Phase 2.1 RLS hardening
--- built by twelve. — bytw12ve
+-- built by twelve.
 -- Run this manually in the Supabase SQL Editor after phase2_auth.sql.
 
 -- Owners may edit their own builds, but regular users must not be able

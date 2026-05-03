@@ -1,4 +1,4 @@
-/* built by twelve. — bytw12ve */
+/* built by twelve. */
 import { KW } from '../tokens.js'
 
 export default function Input({ placeholder, value, onChange, style, onKeyDown }) {

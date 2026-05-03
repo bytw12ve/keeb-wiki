@@ -7,7 +7,7 @@ import Tag from '../components/Tag.jsx'
 import { fetchWikiArticleBySlug, fetchWikiArticles, isStaffProfile } from '../lib/supabase.js'
 import { useAuth } from '../lib/auth.jsx'
 
-/* built by twelve. — bytw12ve */
+/* built by twelve. */
 
 const CATEGORY_META = {
   'beginner-guides': { label: 'beginner', color: KW.blue, bg: '#1F2D3A' },

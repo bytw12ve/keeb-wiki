@@ -1,5 +1,5 @@
 -- keeb.wiki — Phase 3.2 launch submission requirements
--- built by twelve. — bytw12ve
+-- built by twelve.
 -- Run this manually in the Supabase SQL Editor after phase3_1_security_advisor_fixes.sql.
 
 -- Build submissions need enough detail to be useful at launch:

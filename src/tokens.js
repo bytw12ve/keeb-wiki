@@ -1,4 +1,4 @@
-/* built by twelve. — bytw12ve */
+/* built by twelve. */
 export const KW = {
   bg: "#1E1B2E", surface: "#17142A", surface2: "#2D2845", surface3: "#3D3660",
   lavender: "#B8A9E0", pink: "#E8A8C0", blue: "#A8C8E8", green: "#A8E0A8",

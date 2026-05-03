@@ -1,4 +1,4 @@
-/* built by twelve. — bytw12ve */
+/* built by twelve. */
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { supabase, fetchProfile, upsertProfile } from './supabase.js'
 

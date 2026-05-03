@@ -1,5 +1,5 @@
 -- keeb.wiki — Phase 2 auth, ownership, and safer publishing
--- built by twelve. — bytw12ve
+-- built by twelve.
 -- Run this manually in the Supabase SQL Editor after seed.sql, wiki.sql, and security_fixes.sql.
 
 -- ── Profiles ────────────────────────────────────────────────────

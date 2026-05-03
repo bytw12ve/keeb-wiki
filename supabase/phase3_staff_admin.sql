@@ -1,5 +1,5 @@
 -- keeb.wiki — Phase 3 staff admin, moderation, staff picks, and audit notes
--- built by twelve. — bytw12ve
+-- built by twelve.
 -- Run this manually in the Supabase SQL Editor after phase2_3_hard_delete.sql.
 
 -- ── Staff roles ─────────────────────────────────────────────────

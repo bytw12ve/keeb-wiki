@@ -1,4 +1,4 @@
-/* built by twelve. — bytw12ve */
+/* built by twelve. */
 const PALETTES = {
   lavender: { case: "#2D1F4A", plate: "#3D3660", caps: "#B8A9E0", caps2: "#9B91B8", accent: "#E8A8C0" },
   pink:     { case: "#3A1F2D", plate: "#5C2E45", caps: "#E8A8C0", caps2: "#C28098", accent: "#B8A9E0" },

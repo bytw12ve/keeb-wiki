@@ -1,4 +1,4 @@
-/* built by twelve. — bytw12ve */
+/* built by twelve. */
 import { createClient } from '@supabase/supabase-js'
 
 export const supabase = createClient(
