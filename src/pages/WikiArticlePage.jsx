@@ -154,8 +154,10 @@ export default function WikiArticlePage() {
   const isCombined = article.format === 'combined'
   const isOwnerPreview = article.user_id === user?.id && article.status && article.status !== 'published'
   const isStaffPreview = !isOwnerPreview && isStaffProfile(profile) && article.status && article.status !== 'published'
-  const backPath = location.state?.from === 'admin' ? '/admin' : '/wiki'
-  const backLabel = location.state?.from === 'admin' ? '← back to admin' : '← back to wiki'
+  const openedFromProfile = location.state?.from === 'profile'
+  const openedFromAdmin = location.state?.from === 'admin'
+  const backPath = openedFromAdmin ? '/admin' : openedFromProfile ? '/profile' : '/wiki'
+  const backLabel = openedFromAdmin ? '← back to admin' : openedFromProfile ? '← back to profile' : '← back to wiki'
   const tagLabels = new Set([article.category, catMeta.label].map(t => String(t).toLowerCase()))
   const uniqueTags = (article.tags || []).filter((t, i, arr) => {
     const normalized = String(t).toLowerCase()

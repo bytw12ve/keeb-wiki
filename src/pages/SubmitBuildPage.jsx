@@ -221,8 +221,16 @@ export default function SubmitBuildPage() {
       setError('keyboard name is required.')
       return
     }
+    if (!form.layout) {
+      setError('layout is required.')
+      return
+    }
     if (!form.switch_type) {
       setError('switch type is required for filtering.')
+      return
+    }
+    if (photoCount < 1) {
+      setError('add at least one photo before submitting.')
       return
     }
     if (photos.some(photo => photo && !PHOTO_TYPES.includes(photo.file.type))) {
@@ -371,13 +379,13 @@ export default function SubmitBuildPage() {
         {/* Photos */}
         <FormSection title="photos.">
           <div style={{ font: '400 10px/1.6 var(--kw-mono)', color: KW.text3, margin: '-6px 0 12px' }}>
-            first photo is used as the front image on cards and build pages.
+            at least one photo is required. first photo is used as the front image on cards and build pages.
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'var(--kw-grid-photos)', gap: 10, marginBottom: 10 }}>
             {photos.map((p, i) => <PhotoSlot key={i} photo={p} index={i} onAdd={addPhoto} onRemove={removePhoto} />)}
           </div>
           <div style={{ font: '400 10px var(--kw-mono)', color: KW.text4, textAlign: 'right' }}>
-            {photoCount} / 6 photos added · jpg, png, webp, or gif · 5MB max each
+            {photoCount} / 6 photos added · 1 required · jpg, png, webp, or gif · 5MB max each
           </div>
         </FormSection>
 

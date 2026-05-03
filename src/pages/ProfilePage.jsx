@@ -190,7 +190,7 @@ export default function ProfilePage() {
                   meta={`${a.category} · ${new Date(a.created_at).toLocaleDateString('en-US')}`}
                   status={a.status}
                   deleted={Boolean(a.deleted_at)}
-                  onView={() => navigate(`/wiki/${a.slug}`)}
+                  onView={() => navigate(`/wiki/${a.slug}`, { state: { from: 'profile' } })}
                   onEdit={() => navigate(`/wiki/${a.slug}/edit`)}
                   onDelete={() => setConfirmDelete({ kind: 'wiki article', title: a.title, onConfirm: () => deleteArticle(a.id) })}
                 />

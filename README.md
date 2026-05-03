@@ -20,7 +20,8 @@ Live at [keebwiki.com](https://keebwiki.com).
 - Wiki articles by category with table of contents and reading progress
 - User submissions with a moderation workflow (pending → published)
 - Staff picks for homepage featured builds
-- Soft delete and edit for own content
+- Launch-ready build submissions require name, layout, switch type, and at least one photo
+- Permanent delete and edit for own content
 
 ## Tech
 

@@ -284,7 +284,7 @@ export default function DetailsPage() {
             <div style={{ font: '700 16px var(--kw-mono)', color: KW.text }}>build gallery.</div>
           </div>
           <span style={{ font: '400 10px var(--kw-mono)', color: KW.text3 }}>
-            {hasPhotos ? `${photos.length} photos` : 'procedural previews'}
+            {hasPhotos ? `${photos.length} ${photos.length === 1 ? 'photo' : 'photos'}` : 'procedural previews'}
           </span>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'var(--kw-grid-photos)', gap: 10 }}>

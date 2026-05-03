@@ -39,6 +39,7 @@ git -c commit.gpgsign=false commit
 - `/submit-wiki` -> `SubmitWikiPage`
 - `/login` -> `LoginPage`
 - `/profile` -> `ProfilePage` (protected)
+- `/admin` -> `AdminPage` (protected, staff/admin only)
 
 ## Design System
 
@@ -83,9 +84,9 @@ Auth/profile helpers:
 - `fetchOwnBuilds(userId)`
 - `fetchOwnWikiArticles(userId)`
 - `updateOwnBuild(id, patch)`
-- `softDeleteOwnBuild(id)`
+- `deleteOwnBuild({ id, userId })`
 - `updateOwnWikiArticle(id, patch)`
-- `softDeleteOwnWikiArticle(id)`
+- `deleteOwnWikiArticle({ id, userId })`
 
 Notes:
 - The Supabase publishable key is intentionally hardcoded; no `.env` is required.
@@ -104,19 +105,23 @@ SQL files must be run manually in the Supabase SQL Editor.
 - `supabase/seed.sql` creates/seeds `builds`, storage buckets, RLS policies, and upload limits.
 - `supabase/wiki.sql` creates/seeds `wiki_articles` and the `updated_at` trigger.
 - `supabase/security_fixes.sql` applies Security Advisor fixes for existing projects.
-- `supabase/phase2_auth.sql` adds profiles, ownership fields, pending moderation, soft deletes, authenticated inserts, and user-scoped storage policies.
+- `supabase/phase2_auth.sql` adds profiles, ownership fields, pending moderation, authenticated inserts, and user-scoped storage policies.
 - `supabase/phase2_1_rls_hardening.sql` prevents regular users from publishing their own submissions through direct client updates and adds `rejected` wiki status support.
 - `supabase/phase2_2_staff_picks.sql` adds manual staff-pick fields and blocks normal authenticated users from changing them.
+- `supabase/phase2_3_hard_delete.sql` allows owners to permanently delete their own builds.
+- `supabase/phase3_staff_admin.sql` adds staff/admin roles, moderation RPCs, staff-pick management, permanent staff deletes, and audit logging.
+- `supabase/phase3_1_security_advisor_fixes.sql` applies Phase 3 Security Advisor fixes for function search paths, RPC grants, and staff-pick priority validation.
+- `supabase/phase3_2_launch_submission_requirements.sql` requires launch-ready build submissions to include name, layout, switch type, and at least one photo.
 
 Important columns:
 - `builds.user_id` references `auth.users(id)` for user-owned posts.
 - `builds.status` values: `pending`, `published`, `rejected`.
-- `builds.deleted_at` implements soft delete.
+- `builds.deleted_at` hides legacy soft-deleted rows; current owner/staff delete flows permanently delete rows.
 - `builds.photos` stores public Supabase Storage URLs.
 - `builds.is_staff_pick`, `builds.staff_pick_order`, and `builds.staff_picked_at` are staff/admin-controlled homepage featuring fields.
 - `builds.sound_signature` and `builds.typing_feel` are text arrays.
 - `wiki_articles.user_id` references `auth.users(id)` for user-owned posts.
-- `wiki_articles.deleted_at` implements soft delete.
+- `wiki_articles.deleted_at` hides legacy soft-deleted rows; current owner/staff delete flows permanently delete rows.
 - `wiki_articles.category` values: `beginner-guides`, `modding-guides`, `parts-glossary`, `sound-feel`, `community-buying`, `about`.
 - `wiki_articles.format` values: `sections`, `combined`.
 - `wiki_articles.status` values: `draft`, `pending`, `published`, `rejected`.
@@ -138,6 +143,7 @@ Supabase SQL editor note:
 - Wiki article TOC uses `IntersectionObserver`.
 - Wiki article reading progress is a fixed 2px lavender bar at the top.
 - Build links should use `buildRouteSlug(build)` for stable `/builds/{uuid}-{readable-slug}` URLs; old slug-only build URLs should keep working as fallback.
+- Build submissions require at least one photo for launch; optional audio/video media is reserved for Phase 4.
 
 ## Hard Rules
 
@@ -170,7 +176,7 @@ Supabase SQL editor note:
 - Added pending review for new build and wiki submissions.
 - Added profile dashboard for own builds and own wiki submissions.
 - Added edit routes for own builds and wiki articles.
-- Added soft delete helpers for own builds and wiki articles.
+- Added owner delete helpers for own builds and wiki articles.
 - Removed manual `submitted_by` trust from submit forms; submissions use profile username or email fallback.
 - Added custom tags for wiki article submissions.
 - Added `supabase/phase2_auth.sql` for ownership, RLS, moderation, and user-scoped uploads.
@@ -210,11 +216,19 @@ Supabase SQL editor note:
 - [x] Add manual staff-pick SQL fields so featured builds are staff-selected only.
 - [x] Show uploaded build photos on homepage/archive cards with procedural art fallback.
 - [x] Allow owners to add, replace, and remove build photos from the build edit page.
-- [ ] Run `supabase/phase2_2_staff_picks.sql` manually in the Supabase SQL Editor.
+- [x] Added Phase 3 staff/admin SQL for moderation queues, staff-pick management, audit logging, and permanent staff deletes.
+- [x] Added Phase 2.3 hard-delete SQL for owner build deletes.
+- [x] Added `/admin` route for staff moderation and staff-pick management.
+- [x] Added recent admin action audit log.
+- [x] Added Phase 3.1 Security Advisor SQL for function search paths, RPC grants, indexes, and staff-pick priority validation.
+- [x] Fixed homepage featured-card proportions for short and long staff-pick summaries.
+- [x] Added launch submission requirements: name, layout, switch type, and at least one build photo.
+- [x] Added Phase 3.2 SQL for launch submission requirements.
+- [ ] Run `supabase/phase2_2_staff_picks.sql`, `supabase/phase2_3_hard_delete.sql`, `supabase/phase3_staff_admin.sql`, `supabase/phase3_1_security_advisor_fixes.sql`, and `supabase/phase3_2_launch_submission_requirements.sql` manually in the Supabase SQL Editor if they have not already been applied.
 
-## Manual Moderation QA
+## Admin Moderation QA
 
-Until the staff moderation UI exists, approve or reject submitted builds manually in the Supabase SQL Editor.
+Staff/admin users can approve, reject, or permanently delete submitted builds from `/admin`. Use the SQL below only as a manual fallback.
 
 Approve a pending build:
 
@@ -238,9 +252,9 @@ WHERE id = 'PASTE_BUILD_UUID_HERE'
 
 After approval, verify the owner preview banner disappears, the build appears on `/builds`, and a signed-out user can open its detail URL.
 
-## Manual Staff Pick QA
+## Staff Pick QA
 
-Until the staff/admin UI exists, homepage staff picks are managed manually in the Supabase SQL Editor. A published build is not featured unless staff explicitly marks it.
+Staff/admin users can feature, unfeature, and prioritize homepage staff picks from `/admin`. A published build is not featured unless staff explicitly marks it. Use the SQL below only as a manual fallback.
 
 Mark a published build as a staff pick:
 
@@ -277,7 +291,7 @@ After staff-pick changes, verify the build appears or disappears from homepage `
 - Edited the QA build and confirmed the updated title appears in `/profile` while remaining pending.
 - Confirmed the pending QA build does not appear on public `/builds`.
 - Confirmed searching public `/wiki` for the pending QA article returns no results.
-- Did not soft-delete QA content during the visible QA pass because deletes affect Supabase data, even when the records are test records.
+- Did not delete QA content during the visible QA pass because deletes affect Supabase data, even when the records are test records.
 
 ## Supabase Auth Safety Notes
 
@@ -292,22 +306,29 @@ After staff-pick changes, verify the build appears or disappears from homepage `
 - Leaked Password Protection is still disabled unless it can be enabled on the current Supabase plan.
 - No password-change UI exists yet, so secure password-change dashboard toggles do not have app UI in this phase.
 
+## Manual Security Checklist
+
+- Run `supabase/phase3_1_security_advisor_fixes.sql` after Phase 3 SQL.
+- Refresh Supabase Security Advisor after the SQL finishes.
+- Enable Leaked Password Protection in the Supabase Auth dashboard if the current plan allows it.
+- Keep Cloudflare Turnstile blocked until a public site key exists and Supabase captcha protection is configured.
+
 ## Later Phase 2
 
-- [ ] Small staff moderation flow for accepting/rejecting submitted builds and wiki articles.
-- [ ] Staff/admin UI for selecting and ordering homepage staff picks.
 - [ ] Owner-visible rejected feedback/reason fields for builds and wiki articles.
 - [ ] Lightweight empty/error states across profile, builds, wiki search, and details pages.
 - [ ] Comments on builds and wiki articles
 - [ ] Upvote and favorite builds
-- [ ] Audio file upload with size limits
 
 ## Phase 3
 
-- [ ] Admin panel with staff permissions
-- [ ] Staff moderation queue for accepting, rejecting, and managing submitted builds/wiki articles.
+- [x] Admin panel with staff permissions
+- [x] Staff moderation queue for accepting, rejecting, and managing submitted builds/wiki articles.
+- [x] Staff/admin UI for selecting and ordering homepage staff picks.
+- [x] Permanent staff delete actions with audit log records.
 - [ ] Username change request flow instead of self-service username edits.
 - [ ] Logged-in community actions: upvotes, favorites, and comments.
+- [ ] Optional build audio and video uploads.
 - [ ] Homepage background visual upgrade
 - [ ] More homepage sections
 - [ ] Contact page

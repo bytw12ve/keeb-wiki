@@ -44,6 +44,7 @@ function FeaturedCard({ b, onClick }) {
     <div onClick={onClick} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} style={{
       background: KW.surface, border: `1px solid ${hover ? KW.surface3 : KW.border}`,
       borderRadius: 8, padding: 18, cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: 14,
+      minHeight: 390,
       transition: 'border-color .18s, box-shadow .18s',
       boxShadow: hover ? `0 4px 24px rgba(0,0,0,.3)` : 'none',
     }}>
@@ -54,11 +55,21 @@ function FeaturedCard({ b, onClick }) {
           by <span style={{ color: KW.text3 }}>{submittedBy}</span>
         </div>
       </div>
-      {summary && <div style={{ font: '400 11px/1.7 var(--kw-mono)', color: KW.text2 }}>{summary}</div>}
-      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+      <div style={{
+        minHeight: 76,
+        font: '400 11px/1.7 var(--kw-mono)',
+        color: summary ? KW.text2 : KW.text4,
+        display: '-webkit-box',
+        WebkitLineClamp: 4,
+        WebkitBoxOrient: 'vertical',
+        overflow: 'hidden',
+      }}>
+        {summary || 'no builder notes yet.'}
+      </div>
+      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', minHeight: 18, alignContent: 'flex-start' }}>
         {tags.map((t, i) => <Tag key={i}>{t}</Tag>)}
       </div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, borderTop: `1px solid ${KW.border}` }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: 12, borderTop: `1px solid ${KW.border}`, marginTop: 'auto' }}>
         {b.rating ? (
           <span style={{ font: '400 10px var(--kw-mono)', color: KW.text3 }}>
             rated <span style={{ color: KW.text }}>{b.rating}/10</span> by builder

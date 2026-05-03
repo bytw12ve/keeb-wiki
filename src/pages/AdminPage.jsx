@@ -87,7 +87,7 @@ function ModerationRow({ title, meta, status, note, onView, onPublish, onReject,
 }
 
 function StaffPickRow({ build, onView, onSave, onRemove, onDelete, busy }) {
-  const [order, setOrder] = useState(build.staff_pick_order ?? '')
+  const [priority, setPriority] = useState(build.staff_pick_order ?? '')
   const picked = Boolean(build.is_staff_pick)
   return (
     <div style={{
@@ -106,16 +106,16 @@ function StaffPickRow({ build, onView, onSave, onRemove, onDelete, busy }) {
       <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
         <ActionButton onClick={() => onView(build)}>view</ActionButton>
         <input
-          value={order}
-          onChange={e => setOrder(e.target.value.replace(/[^0-9]/g, '').slice(0, 3))}
-          placeholder="order"
+          value={priority}
+          onChange={e => setPriority(e.target.value.replace(/[^0-9]/g, '').slice(0, 3))}
+          placeholder="priority"
           style={{
-            width: 72, height: 28, borderRadius: 6, background: KW.surface2,
+            width: 82, height: 28, borderRadius: 6, background: KW.surface2,
             border: `1px solid ${KW.surface3}`, color: KW.text,
             font: '400 10px var(--kw-mono)', padding: '0 9px', outline: 'none',
           }}
         />
-        <ActionButton tone="good" onClick={() => onSave(build, order)}>{picked ? 'update' : 'feature'}</ActionButton>
+        <ActionButton tone="good" onClick={() => onSave(build, priority)}>{picked ? 'update' : 'feature'}</ActionButton>
         {picked && <ActionButton tone="danger" onClick={() => onRemove(build)}>unfeature</ActionButton>}
         <ActionButton tone="danger" onClick={() => onDelete(build)}>delete</ActionButton>
       </div>
@@ -369,6 +369,9 @@ export default function AdminPage() {
             </Section>
 
             <Section title="published builds." eyebrow="staff picks" empty="no published builds available.">
+              <div style={{ font: '400 10px/1.5 var(--kw-mono)', color: KW.text4, margin: '-2px 0 4px' }}>
+                priority is only for homepage staff picks. lower numbers appear first.
+              </div>
               {publishedBuilds.map(build => (
                 <StaffPickRow
                   key={build.id}
