@@ -313,24 +313,37 @@ After staff-pick changes, verify the build appears or disappears from homepage `
 - Enable Leaked Password Protection in the Supabase Auth dashboard if the current plan allows it.
 - Keep Cloudflare Turnstile blocked until a public site key exists and Supabase captcha protection is configured.
 
-## Later Phase 2
-
-- [ ] Owner-visible rejected feedback/reason fields for builds and wiki articles.
-- [ ] Lightweight empty/error states across profile, builds, wiki search, and details pages.
-- [ ] Comments on builds and wiki articles
-- [ ] Upvote and favorite builds
-
 ## Phase 3
 
 - [x] Admin panel with staff permissions
 - [x] Staff moderation queue for accepting, rejecting, and managing submitted builds/wiki articles.
 - [x] Staff/admin UI for selecting and ordering homepage staff picks.
 - [x] Permanent staff delete actions with audit log records.
+- [x] Homepage featured-card proportion polish.
+- [x] Launch-ready build submission requirements: name, layout, switch type, and at least one photo.
+
+## Phase 4 — Domain, Hosting, And Community
+
+- [ ] Buy/configure production domain `keebwiki.com`.
+- [ ] Choose and configure a free hosting provider for the Vite app.
+- [ ] Update Supabase Site URL and redirect URLs for the production domain.
+- [ ] Configure production auth email sender and templates after domain setup.
+- [ ] Turn email confirmation back on before public production use once SMTP/templates are ready.
+- [ ] Add a simple contact page.
+- [ ] Add a simple suggestions page.
+- [ ] Add Discord/community link after the Discord server exists.
+- [ ] Add optional build sound-test audio upload.
+- [ ] Add optional build video support, likely as an upload or external URL depending on storage/hosting limits.
+- [ ] Show optional audio/video media below the build photo gallery.
+- [ ] Keep photos required even after audio/video media exists.
+
+## Parking Lot
+
+- [ ] Owner-visible rejected feedback/reason fields for builds and wiki articles.
 - [ ] Username change request flow instead of self-service username edits.
-- [ ] Logged-in community actions: upvotes, favorites, and comments.
-- [ ] Optional build audio and video uploads.
-- [ ] Homepage background visual upgrade
-- [ ] More homepage sections
-- [ ] Contact page
-- [ ] Suggestions page
-- [ ] Full build photo gallery polish
+- [ ] Lightweight empty/error states across profile, builds, wiki search, and details pages.
+- [ ] Comments on builds and wiki articles.
+- [ ] Upvote and favorite builds.
+- [ ] Homepage background visual upgrade.
+- [ ] More homepage sections.
+- [ ] Full build photo gallery polish.
