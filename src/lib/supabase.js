@@ -31,6 +31,13 @@ function storagePathFromBuildPhotoUrl(url, userId) {
   return path.startsWith(`${userId}/`) ? path : null
 }
 
+function storagePathFromPublicBuildPhotoUrl(url) {
+  const marker = '/storage/v1/object/public/build-photos/'
+  const idx = String(url || '').indexOf(marker)
+  if (idx === -1) return null
+  return decodeURIComponent(String(url).slice(idx + marker.length).split('?')[0])
+}
+
 export function getArt(build) {
   if (build.art) return build.art
   const mat = (build.case_material || '').toLowerCase()
@@ -139,7 +146,7 @@ export async function fetchStaffPickBuilds({ limit = 2 } = {}) {
   return { data: data || [], error }
 }
 
-export async function fetchBuildBySlug(slug, { ownerId } = {}) {
+export async function fetchBuildBySlug(slug, { ownerId, staffPreview = false } = {}) {
   const { safeSlug, buildId } = parseBuildRouteSlug(slug)
   if (!safeSlug) return { data: null, error: new Error('Invalid build slug') }
   if (buildId) {
@@ -156,6 +163,14 @@ export async function fetchBuildBySlug(slug, { ownerId } = {}) {
         .select('*')
         .eq('id', buildId)
         .eq('user_id', ownerId)
+        .is('deleted_at', null)
+        .single())
+    }
+    if ((!data || error) && staffPreview && !isMissingPhase2Column(error)) {
+      ;({ data, error } = await supabase
+        .from('builds')
+        .select('*')
+        .eq('id', buildId)
         .is('deleted_at', null)
         .single())
     }
@@ -183,6 +198,15 @@ export async function fetchBuildBySlug(slug, { ownerId } = {}) {
       .from('builds')
       .select('*')
       .eq('user_id', ownerId)
+      .is('deleted_at', null)
+      .or(`slug.eq.${safeSlug},name.ilike.${nameGuess}`)
+      .limit(1)
+      .single())
+  }
+  if ((!data || error) && staffPreview && !isMissingPhase2Column(error)) {
+    ;({ data, error } = await supabase
+      .from('builds')
+      .select('*')
       .is('deleted_at', null)
       .or(`slug.eq.${safeSlug},name.ilike.${nameGuess}`)
       .limit(1)
@@ -225,7 +249,7 @@ export async function fetchWikiArticles({ category, status = 'published', limit 
   return { data: data || [], error }
 }
 
-export async function fetchWikiArticleBySlug(slug, { ownerId } = {}) {
+export async function fetchWikiArticleBySlug(slug, { ownerId, staffPreview = false } = {}) {
   const safeSlug = String(slug || '').toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 120)
   if (!safeSlug) return { data: null, error: new Error('Invalid article slug') }
   let { data, error } = await supabase
@@ -249,6 +273,14 @@ export async function fetchWikiArticleBySlug(slug, { ownerId } = {}) {
       .select('*')
       .eq('slug', safeSlug)
       .eq('user_id', ownerId)
+      .is('deleted_at', null)
+      .single())
+  }
+  if ((!data || error) && staffPreview && !isMissingPhase2Column(error)) {
+    ;({ data, error } = await supabase
+      .from('wiki_articles')
+      .select('*')
+      .eq('slug', safeSlug)
       .is('deleted_at', null)
       .single())
   }
@@ -373,6 +405,112 @@ export async function deleteOwnBuild({ id, userId }) {
   return { data, error: null, storageError: null }
 }
 
+export function isStaffProfile(profile) {
+  return ['staff', 'admin'].includes(profile?.role)
+}
+
+export async function fetchAdminPendingBuilds() {
+  const { data, error } = await supabase
+    .from('builds')
+    .select('*')
+    .eq('status', 'pending')
+    .is('deleted_at', null)
+    .order('created_at', { ascending: true })
+  return { data: data || [], error }
+}
+
+export async function fetchAdminPendingWikiArticles() {
+  const { data, error } = await supabase
+    .from('wiki_articles')
+    .select('*')
+    .eq('status', 'pending')
+    .is('deleted_at', null)
+    .order('created_at', { ascending: true })
+  return { data: data || [], error }
+}
+
+export async function fetchAdminPublishedBuilds({ limit = 50 } = {}) {
+  const { data, error } = await supabase
+    .from('builds')
+    .select('*')
+    .eq('status', 'published')
+    .is('deleted_at', null)
+    .order('is_staff_pick', { ascending: false })
+    .order('staff_pick_order', { ascending: true, nullsFirst: false })
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  return { data: data || [], error }
+}
+
+export async function fetchAdminAuditLog({ limit = 20 } = {}) {
+  const { data, error } = await supabase
+    .from('moderation_audit')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  return { data: data || [], error }
+}
+
+export async function moderateBuild({ id, status, note }) {
+  const { data, error } = await supabase
+    .rpc('staff_moderate_build', {
+      target_build_id: id,
+      next_status: status,
+      note: note || null,
+    })
+  return { data, error }
+}
+
+export async function moderateWikiArticle({ id, status, note }) {
+  const { data, error } = await supabase
+    .rpc('staff_moderate_wiki_article', {
+      target_article_id: id,
+      next_status: status,
+      note: note || null,
+    })
+  return { data, error }
+}
+
+export async function deleteBuildAsStaff({ build, note }) {
+  if (!build?.id) return { data: null, error: new Error('Missing build.') }
+  const photoPaths = [...new Set((build.photos || [])
+    .map(storagePathFromPublicBuildPhotoUrl)
+    .filter(Boolean))]
+  const { data, error } = await supabase
+    .rpc('staff_delete_build', {
+      target_build_id: build.id,
+      note: note || null,
+    })
+  if (error) return { data: null, error }
+  let storageError = null
+  if (photoPaths.length > 0) {
+    const { error: removeError } = await supabase.storage.from('build-photos').remove(photoPaths)
+    storageError = removeError || null
+  }
+  return { data, error: null, storageError }
+}
+
+export async function deleteWikiArticleAsStaff({ article, note }) {
+  if (!article?.id) return { data: null, error: new Error('Missing wiki article.') }
+  const { data, error } = await supabase
+    .rpc('staff_delete_wiki_article', {
+      target_article_id: article.id,
+      note: note || null,
+    })
+  return { data, error }
+}
+
+export async function setBuildStaffPick({ id, picked, order, note }) {
+  const { data, error } = await supabase
+    .rpc('staff_set_build_staff_pick', {
+      target_build_id: id,
+      picked,
+      pick_order: picked && order !== '' && order !== null && order !== undefined ? Number(order) : null,
+      note: note || null,
+    })
+  return { data, error }
+}
+
 export async function updateOwnWikiArticle(id, patch) {
   const { data, error } = await supabase
     .from('wiki_articles')
@@ -383,13 +521,18 @@ export async function updateOwnWikiArticle(id, patch) {
   return { data, error }
 }
 
-export async function softDeleteOwnWikiArticle(id) {
-  const { error } = await supabase
+export async function deleteOwnWikiArticle({ id, userId }) {
+  if (!id || !userId) return { data: null, error: new Error('Missing wiki article or user id.') }
+  const { data, error } = await supabase
     .from('wiki_articles')
-    .update({ deleted_at: new Date().toISOString() })
+    .delete()
     .eq('id', id)
-    .is('deleted_at', null)
-  return { data: null, error }
+    .eq('user_id', userId)
+    .select('id')
+    .maybeSingle()
+  if (error) return { data: null, error }
+  if (!data) return { data: null, error: new Error('Wiki article could not be deleted for this account.') }
+  return { data, error: null }
 }
 
 export async function submitWikiArticle({ title, category, description, tags, format, sections, combined, userId, submittedBy }) {

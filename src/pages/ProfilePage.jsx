@@ -5,7 +5,7 @@ import { KW } from '../tokens.js'
 import Nav from '../components/Nav.jsx'
 import Footer from '../components/Footer.jsx'
 import { useAuth } from '../lib/auth.jsx'
-import { fetchOwnBuilds, fetchOwnWikiArticles, deleteOwnBuild, softDeleteOwnWikiArticle, buildRouteSlug } from '../lib/supabase.js'
+import { fetchOwnBuilds, fetchOwnWikiArticles, deleteOwnBuild, deleteOwnWikiArticle, buildRouteSlug } from '../lib/supabase.js'
 
 function StatusPill({ status, deleted }) {
   const label = deleted ? 'deleted' : status || 'published'
@@ -68,7 +68,7 @@ function ConfirmDelete({ target, onCancel, onConfirm, busy }) {
         <div style={{ font: '400 11px/1.6 var(--kw-mono)', color: KW.text3, marginBottom: 18 }}>
           {target.kind === 'build'
             ? <>this will permanently delete <span style={{ color: KW.text2 }}>{target.title}</span> and its photos from the database.</>
-            : <>this will remove <span style={{ color: KW.text2 }}>{target.title}</span> from your profile and public pages.</>
+            : <>this will permanently delete <span style={{ color: KW.text2 }}>{target.title}</span> from the database.</>
           }
         </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
@@ -125,10 +125,10 @@ export default function ProfilePage() {
   const deleteArticle = async (id) => {
     setDeleting(true)
     setDeleteError('')
-    const { error } = await softDeleteOwnWikiArticle(id)
+    const { error } = await deleteOwnWikiArticle({ id, userId: user.id })
     setDeleting(false)
     if (error) {
-      setDeleteError('could not delete that wiki article. refresh and try again.')
+      setDeleteError('could not permanently delete that wiki article. make sure the Phase 3 staff admin SQL has been run, then try again.')
       return
     }
     setConfirmDelete(null)

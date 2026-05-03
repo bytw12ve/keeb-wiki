@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { KW } from '../tokens.js'
 import Logo from './Logo.jsx'
 import { useAuth } from '../lib/auth.jsx'
+import { isStaffProfile } from '../lib/supabase.js'
 
 const LINKS = [
   { key: "home",   label: "home.",   path: "/" },
@@ -23,11 +24,13 @@ export default function Nav() {
     : location.pathname.startsWith("/builds") ? "builds"
     : location.pathname.startsWith("/submit") ? "submit"
     : location.pathname.startsWith("/wiki") ? "wiki"
+    : location.pathname.startsWith("/admin") ? "admin"
     : location.pathname.startsWith("/profile") ? "profile"
     : location.pathname.startsWith("/login") ? "login"
     : location.pathname.startsWith("/submit-wiki") ? "submit"
     : null;
   const displayName = profile?.username || user?.user_metadata?.username || user?.email?.split('@')[0]
+  const isStaff = isStaffProfile(profile)
   const openAccount = () => {
     window.clearTimeout(accountCloseTimer.current)
     setAccountOpen(true)
@@ -131,6 +134,17 @@ export default function Nav() {
                   >
                     profile.
                   </button>
+                  {isStaff && (
+                    <button
+                      role="menuitem"
+                      onClick={() => navigate('/admin')}
+                      style={{ background: 'transparent', border: 'none', borderRadius: 6, color: activeKey === 'admin' ? KW.lavender : KW.text3, cursor: 'pointer', font: `${activeKey === 'admin' ? 700 : 400} 11px var(--kw-mono)`, padding: '8px 10px', textAlign: 'left' }}
+                      onMouseEnter={(e) => e.currentTarget.style.color = KW.text}
+                      onMouseLeave={(e) => e.currentTarget.style.color = activeKey === 'admin' ? KW.lavender : KW.text3}
+                    >
+                      admin.
+                    </button>
+                  )}
                   <button
                     role="menuitem"
                     onClick={async () => { await signOut(); navigate('/') }}

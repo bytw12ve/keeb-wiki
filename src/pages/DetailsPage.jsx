@@ -5,7 +5,7 @@ import Nav from '../components/Nav.jsx'
 import Footer from '../components/Footer.jsx'
 import Tag from '../components/Tag.jsx'
 import KeebArt from '../components/KeebArt.jsx'
-import { fetchBuildBySlug, getArt, getLayoutCode, getBuildTags } from '../lib/supabase.js'
+import { fetchBuildBySlug, getArt, getLayoutCode, getBuildTags, isStaffProfile } from '../lib/supabase.js'
 import { useAuth } from '../lib/auth.jsx'
 
 /* built by twelve. — bytw12ve */
@@ -110,7 +110,7 @@ export default function DetailsPage() {
   const { slug } = useParams()
   const navigate = useNavigate()
   const location = useLocation()
-  const { user, loading: authLoading } = useAuth()
+  const { user, profile, loading: authLoading } = useAuth()
   const [build, setBuild] = useState(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
@@ -121,18 +121,19 @@ export default function DetailsPage() {
     setLoading(true)
     setNotFound(false)
     setBuild(null)
-    fetchBuildBySlug(slug, { ownerId: user?.id }).then(({ data, error }) => {
+    fetchBuildBySlug(slug, { ownerId: user?.id, staffPreview: isStaffProfile(profile) }).then(({ data, error }) => {
       if (error || !data) setNotFound(true)
       else setBuild(data)
       setLoading(false)
     })
-  }, [slug, user?.id, authLoading])
+  }, [slug, user?.id, profile?.role, authLoading])
 
   const photos = build?.photos?.filter(Boolean) || []
   const hasPhotos = photos.length > 0
   const openedFromProfile = location.state?.from === 'profile'
-  const backPath = openedFromProfile ? '/profile' : '/builds'
-  const backLabel = openedFromProfile ? '← back to profile' : '← back to builds'
+  const openedFromAdmin = location.state?.from === 'admin'
+  const backPath = openedFromAdmin ? '/admin' : openedFromProfile ? '/profile' : '/builds'
+  const backLabel = openedFromAdmin ? '← back to admin' : openedFromProfile ? '← back to profile' : '← back to builds'
 
   useEffect(() => {
     if (lightboxIndex === null || !hasPhotos) return
@@ -171,6 +172,7 @@ export default function DetailsPage() {
   const layoutCode = getLayoutCode(build.layout)
   const galleryItems = hasPhotos ? photos : GALLERY_PALETTES
   const isOwnerPreview = build.user_id === user?.id && build.status && build.status !== 'published'
+  const isStaffPreview = !isOwnerPreview && isStaffProfile(profile) && build.status && build.status !== 'published'
   const specs = [
     ['layout', build.layout],
     ['case', build.case_material],
@@ -218,6 +220,19 @@ export default function DetailsPage() {
             marginBottom: 18,
           }}>
             owner preview: this build is {build.status} and only visible to you while it waits for review.
+          </div>
+        )}
+        {isStaffPreview && (
+          <div style={{
+            background: KW.surface,
+            border: `1px solid ${KW.surface3}`,
+            borderRadius: 8,
+            padding: '10px 12px',
+            color: KW.lavender,
+            font: '400 10px/1.6 var(--kw-mono)',
+            marginBottom: 18,
+          }}>
+            staff preview: this build is {build.status} and hidden from public browsing.
           </div>
         )}
 

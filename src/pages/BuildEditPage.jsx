@@ -65,6 +65,7 @@ function MultiToggle({ options, selected, onToggle, single }) {
 function PhotoSlot({ photo, onAdd, onRemove, index }) {
   const [dragOver, setDragOver] = useState(false)
   const inputId = `edit-photo-input-${index}`
+  const slotLabel = index === 0 ? 'front / cover photo' : 'add photo'
   return (
     <div
       onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
@@ -78,17 +79,17 @@ function PhotoSlot({ photo, onAdd, onRemove, index }) {
       }}
     >
       {photo
-        ? <img src={photo.preview} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+        ? <img src={photo.preview} alt={slotLabel} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
         : <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-            <span style={{ font: '400 10px var(--kw-mono)', color: KW.text4 }}>add photo</span>
+            <span style={{ font: '400 10px var(--kw-mono)', color: index === 0 ? KW.lavender : KW.text4 }}>{slotLabel}</span>
           </div>
       }
       {photo && (
         <>
           <div style={{
             position: 'absolute', left: 6, bottom: 6, borderRadius: 4, padding: '3px 6px',
-            background: 'rgba(30,27,46,.82)', color: KW.text3, font: '400 9px var(--kw-mono)',
-          }}>{photo.file ? 'new' : 'replace'}</div>
+            background: 'rgba(30,27,46,.82)', color: index === 0 ? KW.lavender : KW.text3, font: `${index === 0 ? 700 : 400} 9px var(--kw-mono)`,
+          }}>{index === 0 ? `front / cover · ${photo.file ? 'new' : 'replace'}` : (photo.file ? 'new' : 'replace')}</div>
           <button onClick={(e) => { e.stopPropagation(); onRemove(index) }} style={{
             position: 'absolute', top: 6, right: 6, width: 20, height: 20, borderRadius: '50%',
             background: 'rgba(30,27,46,.85)', border: 'none', color: KW.text3, cursor: 'pointer',
@@ -291,6 +292,9 @@ export default function BuildEditPage() {
           <textarea value={form.builder_notes || ''} onChange={e => set('builder_notes', e.target.value)} rows={6} style={{ width: '100%', padding: '10px 12px', borderRadius: 6, background: KW.surface2, border: `1px solid ${KW.surface3}`, color: KW.text, font: '400 11px/1.6 var(--kw-mono)', outline: 'none', resize: 'vertical' }} />
         </FormSection>
         <FormSection title="photos.">
+          <div style={{ font: '400 10px/1.6 var(--kw-mono)', color: KW.text3, margin: '-6px 0 12px' }}>
+            first photo is used as the front image on cards and build pages.
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'var(--kw-grid-photos)', gap: 10, marginBottom: 10 }}>
             {photos.map((p, i) => <PhotoSlot key={i} photo={p} index={i} onAdd={addPhoto} onRemove={removePhoto} />)}
           </div>

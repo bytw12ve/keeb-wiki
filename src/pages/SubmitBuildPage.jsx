@@ -110,6 +110,7 @@ function RatingPicker({ value, onChange }) {
 
 function PhotoSlot({ photo, onAdd, onRemove, index }) {
   const [dragOver, setDragOver] = useState(false)
+  const slotLabel = index === 0 ? 'front / cover photo' : 'add photo'
   return (
     <div
       onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
@@ -123,11 +124,17 @@ function PhotoSlot({ photo, onAdd, onRemove, index }) {
       onClick={() => { if (!photo) { const el = document.getElementById(`photo-input-${index}`); el && el.click() } }}
     >
       {photo
-        ? <img src={photo.preview} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+        ? <img src={photo.preview} alt={slotLabel} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
         : <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-            <span style={{ font: '400 10px var(--kw-mono)', color: KW.text4 }}>add photo</span>
+            <span style={{ font: '400 10px var(--kw-mono)', color: index === 0 ? KW.lavender : KW.text4 }}>{slotLabel}</span>
           </div>
       }
+      {photo && index === 0 && (
+        <div style={{
+          position: 'absolute', left: 6, bottom: 6, borderRadius: 4, padding: '3px 6px',
+          background: 'rgba(30,27,46,.82)', color: KW.lavender, font: '700 9px var(--kw-mono)',
+        }}>front / cover</div>
+      )}
       {photo && (
         <button onClick={(e) => { e.stopPropagation(); onRemove(index) }} style={{
           position: 'absolute', top: 6, right: 6, width: 20, height: 20, borderRadius: '50%',
@@ -136,7 +143,7 @@ function PhotoSlot({ photo, onAdd, onRemove, index }) {
         }}>×</button>
       )}
       <input id={`photo-input-${index}`} type="file" accept="image/*" style={{ display: 'none' }}
-        onChange={(e) => { const f = e.target.files[0]; if (f) onAdd(f, index) }} />
+        onChange={(e) => { const f = e.target.files[0]; if (f) onAdd(f, index); e.target.value = '' }} />
     </div>
   )
 }
@@ -363,6 +370,9 @@ export default function SubmitBuildPage() {
 
         {/* Photos */}
         <FormSection title="photos.">
+          <div style={{ font: '400 10px/1.6 var(--kw-mono)', color: KW.text3, margin: '-6px 0 12px' }}>
+            first photo is used as the front image on cards and build pages.
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'var(--kw-grid-photos)', gap: 10, marginBottom: 10 }}>
             {photos.map((p, i) => <PhotoSlot key={i} photo={p} index={i} onAdd={addPhoto} onRemove={removePhoto} />)}
           </div>

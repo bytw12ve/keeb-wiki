@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { KW } from '../tokens.js'
 import Nav from '../components/Nav.jsx'
 import Footer from '../components/Footer.jsx'
 import Tag from '../components/Tag.jsx'
-import { fetchWikiArticleBySlug, fetchWikiArticles } from '../lib/supabase.js'
+import { fetchWikiArticleBySlug, fetchWikiArticles, isStaffProfile } from '../lib/supabase.js'
 import { useAuth } from '../lib/auth.jsx'
 
 /* built by twelve. — bytw12ve */
@@ -72,7 +72,8 @@ function SectionBubble({ s, id, innerRef }) {
 export default function WikiArticlePage() {
   const { slug } = useParams()
   const navigate = useNavigate()
-  const { user, loading: authLoading } = useAuth()
+  const location = useLocation()
+  const { user, profile, loading: authLoading } = useAuth()
   const [article, setArticle] = useState(null)
   const [related, setRelated] = useState([])
   const [loading, setLoading] = useState(true)
@@ -86,13 +87,13 @@ export default function WikiArticlePage() {
     setLoading(true)
     setArticle(null)
     sectionRefs.current = []
-    fetchWikiArticleBySlug(slug, { ownerId: user?.id }).then(({ data }) => {
+    fetchWikiArticleBySlug(slug, { ownerId: user?.id, staffPreview: isStaffProfile(profile) }).then(({ data }) => {
       setArticle(data)
       if (data?.content?.length) setActiveSection(sectionSlug(data.content[0].heading))
       else setActiveSection(null)
       setLoading(false)
     })
-  }, [slug, user?.id, authLoading])
+  }, [slug, user?.id, profile?.role, authLoading])
 
   useEffect(() => {
     if (!article) return
@@ -152,6 +153,9 @@ export default function WikiArticlePage() {
   const sections = article.content || []
   const isCombined = article.format === 'combined'
   const isOwnerPreview = article.user_id === user?.id && article.status && article.status !== 'published'
+  const isStaffPreview = !isOwnerPreview && isStaffProfile(profile) && article.status && article.status !== 'published'
+  const backPath = location.state?.from === 'admin' ? '/admin' : '/wiki'
+  const backLabel = location.state?.from === 'admin' ? '← back to admin' : '← back to wiki'
   const tagLabels = new Set([article.category, catMeta.label].map(t => String(t).toLowerCase()))
   const uniqueTags = (article.tags || []).filter((t, i, arr) => {
     const normalized = String(t).toLowerCase()
@@ -174,12 +178,12 @@ export default function WikiArticlePage() {
         {/* Main content */}
         <div>
           <button
-            onClick={() => navigate('/wiki')}
+            onClick={() => navigate(backPath)}
             style={{ font: '400 10px var(--kw-mono)', color: KW.text3, background: 'none', border: 'none', cursor: 'pointer', padding: 0, marginBottom: 14 }}
             onMouseEnter={(e) => e.currentTarget.style.color = KW.text}
             onMouseLeave={(e) => e.currentTarget.style.color = KW.text3}
           >
-            ← back to wiki
+            {backLabel}
           </button>
 
           {/* Breadcrumb */}
@@ -225,6 +229,19 @@ export default function WikiArticlePage() {
               marginBottom: 16,
             }}>
               owner preview: this wiki article is {article.status} and only visible to you while it waits for review.
+            </div>
+          )}
+          {isStaffPreview && (
+            <div style={{
+              background: KW.surface,
+              border: `1px solid ${KW.surface3}`,
+              borderRadius: 8,
+              padding: '10px 12px',
+              color: KW.lavender,
+              font: '400 10px/1.6 var(--kw-mono)',
+              marginBottom: 16,
+            }}>
+              staff preview: this wiki article is {article.status} and hidden from public browsing.
             </div>
           )}
           {article.short_description && (
