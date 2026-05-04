@@ -162,107 +162,76 @@ export default function CommunityPage() {
           </div>
         </div>
 
-        <div style={{ marginBottom: 18, background: KW.surface, border: `1px solid ${KW.border}`, borderRadius: 8, padding: 18 }}>
-          <div style={{ font: '700 11px var(--kw-mono)', color: KW.text, marginBottom: 8 }}>contact.</div>
-          <div style={{ font: '400 11px/1.7 var(--kw-mono)', color: KW.text3 }}>
-            For any questions, issues, or general notes, reach us at{' '}
-            <a href={`mailto:${CONTACT_EMAIL}`} style={{ color: KW.lavender, textDecoration: 'none' }}>
-              {CONTACT_EMAIL}
-            </a>
-            .
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, alignItems: 'start' }}>
+          {/* Left: contact */}
+          <div style={{ background: KW.surface, border: `1px solid ${KW.border}`, borderRadius: 8, padding: 20 }}>
+            <div style={{ font: '700 9px var(--kw-mono)', color: KW.lavender, letterSpacing: '.24em', textTransform: 'uppercase', marginBottom: 12 }}>
+              contact
+            </div>
+            <div style={{ font: '700 13px var(--kw-mono)', color: KW.text, marginBottom: 10 }}>get in touch.</div>
+            <div style={{ font: '400 11px/1.7 var(--kw-mono)', color: KW.text3 }}>
+              For any questions, issues, or general notes, reach us at{' '}
+              <a href={`mailto:${CONTACT_EMAIL}`} style={{ color: KW.lavender, textDecoration: 'none' }}>
+                {CONTACT_EMAIL}
+              </a>
+              .
+            </div>
           </div>
-        </div>
 
-        <div style={{ font: '700 9px var(--kw-mono)', color: KW.pink, letterSpacing: '.24em', textTransform: 'uppercase', marginBottom: 14 }}>
-          suggestions
-        </div>
+          {/* Right: suggestions */}
+          <div style={{ background: KW.surface, border: `1px solid ${KW.border}`, borderRadius: 8, padding: 20 }}>
+            <div style={{ font: '700 9px var(--kw-mono)', color: KW.pink, letterSpacing: '.24em', textTransform: 'uppercase', marginBottom: 12 }}>
+              suggestions
+            </div>
+            <div style={{ font: '400 11px/1.6 var(--kw-mono)', color: KW.text3, marginBottom: 16 }}>
+              Help shape the archive before launch. Suggestions stay private to the moderation team.
+            </div>
 
-        <div style={{ font: '400 11px/1.6 var(--kw-mono)', color: KW.text3, maxWidth: 640, marginBottom: 16 }}>
-          Help shape the archive before launch. Suggestions stay private to the moderation team and are used to plan cleanup, wiki topics, and community features.
-        </div>
-
-        {user && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'var(--kw-grid-wiki-sections)', gap: 12, marginBottom: 18 }}>
-            {SUGGESTION_CATEGORIES.map(category => (
-              <CategoryButton
-                key={category}
-                category={category}
-                active={form.category === category}
-                onClick={() => set('category', category)}
-              />
-            ))}
-          </div>
-        )}
-
-        {success && (
-          <div style={{ background: KW.surface, border: `1px solid ${KW.green}`, borderRadius: 8, padding: 16, font: '400 11px/1.6 var(--kw-mono)', color: KW.green, marginBottom: 18 }}>
-            suggestion submitted. thanks for helping tighten the site before launch.
-          </div>
-        )}
-
-        {loading ? (
-          <div style={{ background: KW.surface, border: `1px solid ${KW.border}`, borderRadius: 8, padding: 20, font: '400 11px var(--kw-mono)', color: KW.text4 }}>
-            checking session...
-          </div>
-        ) : !user ? (
-          <div style={{
-            background: KW.surface,
-            border: `1px solid ${KW.border}`,
-            borderRadius: 8,
-            padding: 20,
-            display: 'flex',
-            justifyContent: 'space-between',
-            gap: 18,
-            alignItems: 'center',
-            flexWrap: 'wrap',
-          }}>
-            <div>
-              <div style={{ font: '700 12px var(--kw-mono)', color: KW.text, marginBottom: 8 }}>log in to submit a suggestion.</div>
-              <div style={{ font: '400 11px/1.7 var(--kw-mono)', color: KW.text3, maxWidth: 560 }}>
-                Suggestions are tied to member accounts so staff can keep spam out and follow up later if needed.
+            {success && (
+              <div style={{ background: KW.bg, border: `1px solid ${KW.green}`, borderRadius: 6, padding: 14, font: '400 11px/1.6 var(--kw-mono)', color: KW.green, marginBottom: 14 }}>
+                suggestion submitted. thanks for helping tighten the site before launch.
               </div>
-            </div>
-            <Button variant="secondary" onClick={() => navigate('/login', { state: { from: '/community' } })}>log in →</Button>
+            )}
+
+            {loading ? (
+              <div style={{ font: '400 11px var(--kw-mono)', color: KW.text4 }}>checking session...</div>
+            ) : !user ? (
+              <div>
+                <div style={{ font: '700 11px var(--kw-mono)', color: KW.text, marginBottom: 8 }}>log in to submit a suggestion.</div>
+                <div style={{ font: '400 11px/1.7 var(--kw-mono)', color: KW.text3, marginBottom: 14 }}>
+                  Suggestions are tied to member accounts so staff can keep spam out and follow up later if needed.
+                </div>
+                <Button variant="secondary" onClick={() => navigate('/login', { state: { from: '/community' } })}>log in →</Button>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  {SUGGESTION_CATEGORIES.map(category => (
+                    <CategoryButton
+                      key={category}
+                      category={category}
+                      active={form.category === category}
+                      onClick={() => set('category', category)}
+                    />
+                  ))}
+                </div>
+                <Field label="title">
+                  <TextInput value={form.title} onChange={value => set('title', value)} placeholder="short version of the idea" />
+                </Field>
+                <Field label="message">
+                  <TextArea value={form.message} onChange={value => set('message', value)} placeholder="what should change, what feels confusing, or what would help?" />
+                </Field>
+                <Field label="page url (optional)">
+                  <TextInput value={form.pageUrl} onChange={value => set('pageUrl', value)} placeholder="paste the page this relates to, if any" />
+                </Field>
+                {error && <div style={{ font: '400 10px/1.5 var(--kw-mono)', color: KW.pink }}>{error}</div>}
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <Button onClick={handleSubmit} disabled={submitting || loading}>{submitting ? 'submitting...' : 'submit suggestion →'}</Button>
+                </div>
+              </div>
+            )}
           </div>
-        ) : (
-          <div style={{ background: KW.surface, border: `1px solid ${KW.border}`, borderRadius: 8, padding: 24 }}>
-            <div style={{ font: '700 12px var(--kw-mono)', color: KW.lavender, marginBottom: 20 }}>submit a suggestion.</div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <Field label="category">
-                <select
-                  value={form.category}
-                  onChange={e => set('category', e.target.value)}
-                  style={{
-                    height: 33,
-                    padding: '0 12px',
-                    borderRadius: 6,
-                    background: KW.surface2,
-                    border: `1px solid ${KW.surface3}`,
-                    color: KW.text,
-                    font: '400 11px var(--kw-mono)',
-                    outline: 'none',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {SUGGESTION_CATEGORIES.map(category => <option key={category} value={category} style={{ background: KW.surface, color: KW.text }}>{category}</option>)}
-                </select>
-              </Field>
-              <Field label="title">
-                <TextInput value={form.title} onChange={value => set('title', value)} placeholder="short version of the idea" />
-              </Field>
-              <Field label="message">
-                <TextArea value={form.message} onChange={value => set('message', value)} placeholder="what should change, what feels confusing, or what would help?" />
-              </Field>
-              <Field label="page url (optional)">
-                <TextInput value={form.pageUrl} onChange={value => set('pageUrl', value)} placeholder="paste the page this relates to, if any" />
-              </Field>
-            </div>
-            {error && <div style={{ font: '400 10px/1.5 var(--kw-mono)', color: KW.pink, marginTop: 14 }}>{error}</div>}
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 18 }}>
-              <Button onClick={handleSubmit} disabled={submitting || loading}>{submitting ? 'submitting...' : 'submit suggestion →'}</Button>
-            </div>
-          </div>
-        )}
+        </div>
       </div>
       <Footer />
     </div>
