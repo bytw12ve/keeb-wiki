@@ -162,7 +162,7 @@ export default function CommunityPage() {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, alignItems: 'start' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {/* Left: contact */}
           <div style={{ background: KW.surface, border: `1px solid ${KW.border}`, borderRadius: 8, padding: 20 }}>
             <div style={{ font: '700 9px var(--kw-mono)', color: KW.lavender, letterSpacing: '.24em', textTransform: 'uppercase', marginBottom: 12 }}>
