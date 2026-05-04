@@ -162,14 +162,18 @@ export default function CommunityPage() {
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ background: KW.surface, border: `1px solid ${KW.border}`, borderRadius: 8, padding: 20 }}>
-            <div style={{ font: '700 11px var(--kw-mono)', color: KW.text, marginBottom: 8 }}>contact.</div>
-            <div style={{ font: '400 11px/1.7 var(--kw-mono)', color: KW.text3 }}>
-              For any questions, issues, or general notes, reach us at{' '}
-              <a href={`mailto:${CONTACT_EMAIL}`} style={{ color: KW.lavender, textDecoration: 'none' }}>
-                {CONTACT_EMAIL}
-              </a>
-              .
+          <div>
+            <div style={{ font: '700 9px var(--kw-mono)', color: KW.lavender, letterSpacing: '.24em', textTransform: 'uppercase', marginBottom: 12 }}>
+              contact
+            </div>
+            <div style={{ background: KW.surface, border: `1px solid ${KW.border}`, borderRadius: 8, padding: 20 }}>
+              <div style={{ font: '400 11px/1.7 var(--kw-mono)', color: KW.text3 }}>
+                For any questions, issues, or general notes, reach us at{' '}
+                <a href={`mailto:${CONTACT_EMAIL}`} style={{ color: KW.lavender, textDecoration: 'none' }}>
+                  {CONTACT_EMAIL}
+                </a>
+                .
+              </div>
             </div>
           </div>
 
