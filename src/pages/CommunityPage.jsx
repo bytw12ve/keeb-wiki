@@ -196,10 +196,12 @@ export default function CommunityPage() {
             {loading ? (
               <div style={{ font: '400 11px var(--kw-mono)', color: KW.text4 }}>checking session...</div>
             ) : !user ? (
-              <div>
-                <div style={{ font: '700 11px var(--kw-mono)', color: KW.text, marginBottom: 8 }}>log in to submit a suggestion.</div>
-                <div style={{ font: '400 11px/1.7 var(--kw-mono)', color: KW.text3, marginBottom: 14 }}>
-                  Suggestions are tied to member accounts so staff can keep spam out and follow up later if needed.
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 18, flexWrap: 'wrap' }}>
+                <div>
+                  <div style={{ font: '700 11px var(--kw-mono)', color: KW.text, marginBottom: 8 }}>log in to submit a suggestion.</div>
+                  <div style={{ font: '400 11px/1.7 var(--kw-mono)', color: KW.text3 }}>
+                    Suggestions are tied to member accounts so staff can keep spam out and follow up later if needed.
+                  </div>
                 </div>
                 <Button variant="secondary" onClick={() => navigate('/login', { state: { from: '/community' } })}>log in →</Button>
               </div>
