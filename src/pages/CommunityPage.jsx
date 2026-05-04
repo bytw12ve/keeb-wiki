@@ -8,6 +8,8 @@ import Button from '../components/Button.jsx'
 import { SUGGESTION_CATEGORIES, submitSuggestion } from '../lib/supabase.js'
 import { useAuth } from '../lib/auth.jsx'
 const CONTACT_EMAIL = 'contact@keebwiki.com'
+const GITHUB_REPO_URL = 'https://github.com/bytw12ve/keebwiki'
+const YOUTUBE_CHANNEL_URL = 'https://www.youtube.com/@tw12ve'
 
 const CATEGORY_COPY = {
   'missing wiki topic': 'Tell us what guide, glossary entry, or comparison would have helped you earlier.',
@@ -174,6 +176,31 @@ export default function CommunityPage() {
                   {CONTACT_EMAIL}
                 </a>
                 .
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div style={{ font: '700 9px var(--kw-mono)', color: KW.green, letterSpacing: '.24em', textTransform: 'uppercase', marginBottom: 12 }}>
+              project
+            </div>
+            <div style={{ background: KW.surface, border: `1px solid ${KW.border}`, borderRadius: 8, padding: 20 }}>
+              <div style={{ font: '700 11px var(--kw-mono)', color: KW.text, marginBottom: 8 }}>keep up with the project.</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, font: '400 11px/1.7 var(--kw-mono)', color: KW.text3 }}>
+                <div>
+                  Follow keebwiki source changes and project progress on{' '}
+                  <a href={GITHUB_REPO_URL} target="_blank" rel="noreferrer" style={{ color: KW.lavender, textDecoration: 'none' }}>
+                    GitHub
+                  </a>
+                  .
+                </div>
+                <div>
+                  For related updates from twelve, the company behind the site, follow the{' '}
+                  <a href={YOUTUBE_CHANNEL_URL} target="_blank" rel="noreferrer" style={{ color: KW.lavender, textDecoration: 'none' }}>
+                    YouTube
+                  </a>
+                  {' '}channel.
+                </div>
               </div>
             </div>
           </div>
