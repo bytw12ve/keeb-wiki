@@ -165,7 +165,7 @@ export default function CommunityPage() {
         <div style={{ marginBottom: 18, background: KW.surface, border: `1px solid ${KW.border}`, borderRadius: 8, padding: 18 }}>
           <div style={{ font: '700 11px var(--kw-mono)', color: KW.text, marginBottom: 8 }}>contact.</div>
           <div style={{ font: '400 11px/1.7 var(--kw-mono)', color: KW.text3 }}>
-            Reach the project at{' '}
+            For any questions, issues, or general notes, reach us at{' '}
             <a href={`mailto:${CONTACT_EMAIL}`} style={{ color: KW.lavender, textDecoration: 'none' }}>
               {CONTACT_EMAIL}
             </a>
@@ -181,16 +181,18 @@ export default function CommunityPage() {
           Help shape the archive before launch. Suggestions stay private to the moderation team and are used to plan cleanup, wiki topics, and community features.
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'var(--kw-grid-wiki-sections)', gap: 12, marginBottom: 18 }}>
-          {SUGGESTION_CATEGORIES.map(category => (
-            <CategoryButton
-              key={category}
-              category={category}
-              active={form.category === category}
-              onClick={() => set('category', category)}
-            />
-          ))}
-        </div>
+        {user && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'var(--kw-grid-wiki-sections)', gap: 12, marginBottom: 18 }}>
+            {SUGGESTION_CATEGORIES.map(category => (
+              <CategoryButton
+                key={category}
+                category={category}
+                active={form.category === category}
+                onClick={() => set('category', category)}
+              />
+            ))}
+          </div>
+        )}
 
         {success && (
           <div style={{ background: KW.surface, border: `1px solid ${KW.green}`, borderRadius: 8, padding: 16, font: '400 11px/1.6 var(--kw-mono)', color: KW.green, marginBottom: 18 }}>

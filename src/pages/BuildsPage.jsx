@@ -103,12 +103,12 @@ function SubmitBuildCallout({ onClick }) {
       flexWrap: 'wrap',
     }}>
       <div>
-        <div style={{ font: '700 12px var(--kw-mono)', color: KW.text, marginBottom: 7 }}>built something worth sharing?</div>
+        <div style={{ font: '700 12px var(--kw-mono)', color: KW.lavender, marginBottom: 7 }}>built something worth sharing?</div>
         <div style={{ font: '400 11px/1.6 var(--kw-mono)', color: KW.text3, maxWidth: 620 }}>
           Add your keyboard to the archive with specs, photos, and notes. Submissions stay pending until they are reviewed.
         </div>
       </div>
-      <Button variant="secondary" onClick={onClick}>submit build →</Button>
+      <Button onClick={onClick}>submit build →</Button>
     </div>
   )
 }
