@@ -38,7 +38,7 @@ export default function ContactPage() {
           </div>
           <h1 style={{ font: '700 32px/1 var(--kw-mono)', color: KW.text, margin: '0 0 10px' }}>contact.</h1>
           <div style={{ font: '400 12px/1.7 var(--kw-mono)', color: KW.text3, maxWidth: 620 }}>
-            keeb.wiki is still small and deliberately curated. Use the launch contact address for direct notes, or use the built-in contribution flows for builds, wiki articles, and suggestions.
+            keebwiki is still small and deliberately curated. Use the launch contact address for direct notes, or use the built-in contribution flows for builds, wiki articles, and suggestions.
           </div>
         </div>
 

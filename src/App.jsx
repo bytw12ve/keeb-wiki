@@ -14,6 +14,7 @@ import WikiEditPage from './pages/WikiEditPage.jsx'
 import AdminPage from './pages/AdminPage.jsx'
 import ContactPage from './pages/ContactPage.jsx'
 import SuggestionsPage from './pages/SuggestionsPage.jsx'
+import CommunityPage from './pages/CommunityPage.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 
 export default function App() {
@@ -33,6 +34,7 @@ export default function App() {
       <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
       <Route path="/contact" element={<ContactPage />} />
       <Route path="/suggestions" element={<SuggestionsPage />} />
+      <Route path="/community" element={<CommunityPage />} />
     </Routes>
   )
 }

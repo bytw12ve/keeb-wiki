@@ -6,24 +6,17 @@ import Logo from './Logo.jsx'
 import { useAuth } from '../lib/auth.jsx'
 import { isStaffProfile } from '../lib/supabase.js'
 
-const COMMUNITY_LINKS = [
-  ['contact.', '/contact'],
-  ['suggestions.', '/suggestions'],
-]
-
 export default function Nav() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, profile, signOut } = useAuth();
   const [accountOpen, setAccountOpen] = useState(false);
-  const [communityOpen, setCommunityOpen] = useState(false);
   const accountCloseTimer = useRef(null);
-  const communityCloseTimer = useRef(null);
 
   const activeKey = location.pathname === "/" ? "home"
     : location.pathname.startsWith("/builds") || location.pathname === "/submit" ? "builds"
     : location.pathname.startsWith("/wiki") || location.pathname === "/submit-wiki" ? "wiki"
-    : location.pathname.startsWith("/contact") || location.pathname.startsWith("/suggestions") ? "community"
+    : location.pathname.startsWith("/community") || location.pathname.startsWith("/contact") || location.pathname.startsWith("/suggestions") ? "community"
     : location.pathname.startsWith("/admin") ? "admin"
     : location.pathname.startsWith("/profile") ? "profile"
     : location.pathname.startsWith("/login") ? "login"
@@ -38,18 +31,9 @@ export default function Nav() {
     window.clearTimeout(accountCloseTimer.current)
     accountCloseTimer.current = window.setTimeout(() => setAccountOpen(false), 180)
   }
-  const openCommunity = () => {
-    window.clearTimeout(communityCloseTimer.current)
-    setCommunityOpen(true)
-  }
-  const closeCommunitySoon = () => {
-    window.clearTimeout(communityCloseTimer.current)
-    communityCloseTimer.current = window.setTimeout(() => setCommunityOpen(false), 180)
-  }
   useEffect(() => {
     return () => {
       window.clearTimeout(accountCloseTimer.current)
-      window.clearTimeout(communityCloseTimer.current)
     }
   }, [])
   const navTriggerStyle = (isActive) => ({
@@ -70,32 +54,6 @@ export default function Nav() {
     appearance: "none",
     WebkitAppearance: "none",
   })
-  const menuPanelStyle = {
-    position: 'absolute',
-    right: 0,
-    top: 'calc(100% + 8px)',
-    zIndex: 20,
-    minWidth: 142,
-    background: KW.surface,
-    border: `1px solid ${KW.border}`,
-    borderRadius: 8,
-    padding: 6,
-    boxShadow: '0 12px 24px rgba(0,0,0,.24)',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 2,
-  }
-  const menuItemStyle = (isActive) => ({
-    background: 'transparent',
-    border: 'none',
-    borderRadius: 6,
-    color: isActive ? KW.lavender : KW.text3,
-    cursor: 'pointer',
-    font: `${isActive ? 700 : 400} 11px var(--kw-mono)`,
-    padding: '8px 10px',
-    textAlign: 'left',
-  })
-
   return (
     <div style={{
       minHeight: 44, background: KW.surface,
@@ -118,6 +76,7 @@ export default function Nav() {
           ['home.', '/', 'home'],
           ['builds.', '/builds', 'builds'],
           ['wiki.', '/wiki', 'wiki'],
+          ['community.', '/community', 'community'],
         ].map(([label, path, key]) => {
           const isActive = activeKey === key
           return (
@@ -131,51 +90,6 @@ export default function Nav() {
             >{label}</a>
           )
         })}
-        <div
-          onMouseEnter={openCommunity}
-          onMouseLeave={closeCommunitySoon}
-          onFocus={openCommunity}
-          onBlur={(e) => {
-            if (!e.currentTarget.contains(e.relatedTarget)) closeCommunitySoon()
-          }}
-          style={{ position: 'relative', height: 18, display: 'inline-flex', alignItems: 'center' }}
-        >
-          <button
-            type="button"
-            aria-haspopup="menu"
-            aria-expanded={communityOpen}
-            onClick={openCommunity}
-            style={navTriggerStyle(activeKey === 'community' || communityOpen)}
-            onMouseEnter={(e) => { if (activeKey !== 'community') e.currentTarget.style.color = KW.text; }}
-            onMouseLeave={(e) => { if (activeKey !== 'community' && !communityOpen) e.currentTarget.style.color = KW.text3; }}
-          >
-            community.
-          </button>
-          {communityOpen && (
-            <>
-              <div style={{ position: 'absolute', right: 0, top: '100%', width: '100%', height: 10 }} />
-              <div role="menu" style={{ ...menuPanelStyle, minWidth: 154 }}>
-                {COMMUNITY_LINKS.map(([label, path]) => {
-                  const isActive = path === '/submit-wiki'
-                    ? location.pathname === '/submit-wiki'
-                    : location.pathname.startsWith(path)
-                  return (
-                    <button
-                      key={path}
-                      role="menuitem"
-                      onClick={() => { setCommunityOpen(false); navigate(path) }}
-                      style={menuItemStyle(isActive)}
-                      onMouseEnter={(e) => e.currentTarget.style.color = KW.text}
-                      onMouseLeave={(e) => e.currentTarget.style.color = isActive ? KW.lavender : KW.text3}
-                    >
-                      {label}
-                    </button>
-                  )
-                })}
-              </div>
-            </>
-          )}
-        </div>
         {user && displayName ? (
           <div
             onMouseEnter={openAccount}

@@ -11,7 +11,7 @@ export default function Footer() {
       padding: "0 24px", flexShrink: 0, font: "400 10px var(--kw-mono)", color: KW.text3,
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <span>keeb.wiki</span>
+        <span>keebwiki</span>
         <span style={{ color: KW.text4 }}>•</span>
         <span style={{ color: KW.text4 }}>community archive, est. 2026</span>
       </div>
@@ -19,8 +19,7 @@ export default function Footer() {
         {[
           ['submit.', '/submit'],
           ['wiki.', '/wiki'],
-          ['contact.', '/contact'],
-          ['suggestions.', '/suggestions'],
+          ['community.', '/community'],
         ].map(([label, to]) => (
           <Link key={label} to={to} style={{ cursor: "pointer", color: 'inherit', textDecoration: 'none' }}>{label}</Link>
         ))}

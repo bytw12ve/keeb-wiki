@@ -173,8 +173,6 @@ export default function BuildsPage() {
           <SortButton value={sort} onClick={() => setSort(SORTS[sort]?.next || 'newest')} />
         </div>
 
-        <SubmitBuildCallout onClick={() => navigate('/submit')} />
-
         {/* Filter pills */}
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 22, paddingBottom: 22, borderBottom: `1px solid ${KW.border}` }}>
           {BUILD_FILTERS.map(p => (
@@ -210,6 +208,10 @@ export default function BuildsPage() {
           {totalPages > 5 && <><span style={{ color: KW.text4, font: '400 11px var(--kw-mono)', padding: '0 4px' }}>…</span>
             <PageButton onClick={() => setPage(totalPages)}>{totalPages}</PageButton></>}
           <PageButton onClick={() => setPage(p => Math.min(totalPages, p+1))} disabled={page === totalPages}>next →</PageButton>
+        </div>
+
+        <div style={{ marginTop: 24 }}>
+          <SubmitBuildCallout onClick={() => navigate('/submit')} />
         </div>
       </div>
       <Footer />

@@ -14,12 +14,12 @@ const SECTIONS = [
     dbKey: 'about',
     title: 'about.',
     color: KW.lavender,
-    desc: "keeb.wiki is a community driven archive for mechanical keyboard builds. Learn what we're about, how the site started, and how you can get involved.",
+    desc: "keebwiki is a community driven archive for mechanical keyboard builds. Learn what we're about, how the site started, and how you can get involved.",
     links: [
-      'what is keeb.wiki',
+      'what is keebwiki',
       'how to contribute',
-      { label: 'contact the project', to: '/contact' },
-      { label: 'share a suggestion', to: '/suggestions' },
+      { label: 'contact the project', to: '/community' },
+      { label: 'share a suggestion', to: '/community' },
     ],
   },
   {
@@ -280,7 +280,7 @@ export default function WikiPage() {
           knowledge base
         </div>
         <h1 style={{ font: '700 36px/1.1 var(--kw-mono)', color: KW.text, margin: '0 0 14px', letterSpacing: '-.01em' }}>
-          the keeb.wiki knowledge base.
+          the keebwiki knowledge base.
         </h1>
         <div style={{ font: '400 13px/1.5 var(--kw-mono)', color: KW.text3, maxWidth: 560, margin: '0 auto 28px' }}>
           guides, glossaries, and everything you need to know about mechanical keyboards.

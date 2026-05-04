@@ -114,7 +114,7 @@ export default function LoginPage() {
           <div style={{ font: '400 11px/1.6 var(--kw-mono)', color: KW.text3, marginBottom: 22 }}>
             {mode === 'signup'
               ? 'make a profile so your builds and articles belong to you. passwords need at least 8 characters.'
-              : 'log in to submit, edit, and manage your keeb.wiki posts.'}
+              : 'log in to submit, edit, and manage your keebwiki posts.'}
           </div>
           <Button variant="secondary" onClick={handleGoogle} disabled={submitting} style={{ width: '100%', marginBottom: 16 }}>
             continue with google.
