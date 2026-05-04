@@ -22,6 +22,10 @@ function sectionSlug(heading) {
   return heading.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 }
 
+function punctuatedTitle(title) {
+  return /[.!?]$/.test(String(title || '').trim()) ? title : `${title}.`
+}
+
 function timeAgo(dateStr) {
   const diff = Date.now() - new Date(dateStr)
   const days = Math.floor(diff / 86400000)
@@ -219,7 +223,7 @@ export default function WikiArticlePage() {
             )}
           </div>
 
-          <h1 style={{ font: '700 28px/1.2 var(--kw-mono)', color: KW.text, margin: '0 0 10px' }}>{article.title}.</h1>
+          <h1 style={{ font: '700 28px/1.2 var(--kw-mono)', color: KW.text, margin: '0 0 10px' }}>{punctuatedTitle(article.title)}</h1>
           {isOwnerPreview && (
             <div style={{
               background: KW.surface,

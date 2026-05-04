@@ -128,7 +128,7 @@ export default function ProfilePage() {
     const { error } = await deleteOwnWikiArticle({ id, userId: user.id })
     setDeleting(false)
     if (error) {
-      setDeleteError('could not permanently delete that wiki article. make sure the Phase 3 staff admin SQL has been run, then try again.')
+      setDeleteError('could not permanently delete that wiki article. log out and back in, then try again.')
       return
     }
     setConfirmDelete(null)

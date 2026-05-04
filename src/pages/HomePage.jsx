@@ -29,7 +29,7 @@ function Hero({ q, setQ, onSearch, buildCount }) {
         <Button onClick={onSearch} style={{ height: 36 }}>search</Button>
       </div>
       <div style={{ marginTop: 20, font: '400 10px var(--kw-mono)', color: KW.text4, display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
-        <span>{buildCount ?? '—'} builds in the archive</span><span>•</span><span>updated daily</span><span>•</span><span>no ads, no algorithm</span>
+        <span>{buildCount ?? '—'} builds in the archive</span><span>•</span><span>community moderated</span><span>•</span><span>no ads, no algorithm</span>
       </div>
     </div>
   )

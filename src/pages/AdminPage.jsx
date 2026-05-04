@@ -14,10 +14,12 @@ import {
   fetchAdminPendingBuilds,
   fetchAdminPendingWikiArticles,
   fetchAdminPublishedBuilds,
+  fetchAdminSuggestions,
   isStaffProfile,
   moderateBuild,
   moderateWikiArticle,
   setBuildStaffPick,
+  updateSuggestionStatus,
 } from '../lib/supabase.js'
 
 function StatusPill({ children, color = KW.lavender }) {
@@ -123,6 +125,51 @@ function StaffPickRow({ build, onView, onSave, onRemove, onDelete, busy }) {
   )
 }
 
+function SuggestionRow({ suggestion, onStatus, busy }) {
+  const [note, setNote] = useState(suggestion.staff_note || '')
+  return (
+    <div style={{
+      background: KW.surface, border: `1px solid ${KW.border}`, borderRadius: 8,
+      padding: 14, display: 'grid', gridTemplateColumns: '1fr auto', gap: 12, alignItems: 'start',
+    }}>
+      <div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginBottom: 5 }}>
+          <span style={{ font: '700 12px var(--kw-mono)', color: KW.text }}>{suggestion.title}</span>
+          <StatusPill color={suggestion.status === 'open' ? KW.green : KW.lavender}>{suggestion.status}</StatusPill>
+        </div>
+        <div style={{ font: '400 10px/1.5 var(--kw-mono)', color: KW.text4 }}>
+          {suggestion.category} · {suggestion.submitted_by || 'member'} · {new Date(suggestion.created_at).toLocaleDateString('en-US')}
+        </div>
+        {suggestion.page_url && <div style={{ font: '400 10px/1.5 var(--kw-mono)', color: KW.text3, marginTop: 6 }}>page: {suggestion.page_url}</div>}
+        <div style={{ font: '400 11px/1.6 var(--kw-mono)', color: KW.text3, marginTop: 8, whiteSpace: 'pre-wrap' }}>{suggestion.message}</div>
+        <textarea
+          value={note}
+          onChange={e => setNote(e.target.value)}
+          placeholder="optional staff note"
+          rows={2}
+          style={{
+            width: '100%',
+            marginTop: 10,
+            padding: '8px 10px',
+            borderRadius: 6,
+            background: KW.surface2,
+            border: `1px solid ${KW.surface3}`,
+            color: KW.text,
+            font: '400 10px/1.5 var(--kw-mono)',
+            outline: 'none',
+            resize: 'vertical',
+            boxSizing: 'border-box',
+          }}
+        />
+      </div>
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+        <ActionButton tone="good" onClick={() => onStatus(suggestion, 'triaged', note)}>{suggestion.status === 'triaged' ? 'triaged' : 'triage'}</ActionButton>
+        <ActionButton tone="danger" onClick={() => onStatus(suggestion, 'closed', note)}>close</ActionButton>
+      </div>
+    </div>
+  )
+}
+
 function AuditRow({ item }) {
   const snapshotName = item.snapshot?.name || item.snapshot?.title || item.target_id
   const note = item.note || item.snapshot?.review_note || item.snapshot?.staff_pick_note
@@ -196,6 +243,7 @@ export default function AdminPage() {
   const [pendingBuilds, setPendingBuilds] = useState([])
   const [pendingArticles, setPendingArticles] = useState([])
   const [publishedBuilds, setPublishedBuilds] = useState([])
+  const [suggestions, setSuggestions] = useState([])
   const [auditLog, setAuditLog] = useState([])
   const [loading, setLoading] = useState(true)
   const [message, setMessage] = useState('')
@@ -208,18 +256,23 @@ export default function AdminPage() {
     if (!isStaff) return
     setLoading(true)
     setError('')
-    const [builds, articles, published, audit] = await Promise.all([
+    const [builds, articles, published, suggestionQueue, audit] = await Promise.all([
       fetchAdminPendingBuilds(),
       fetchAdminPendingWikiArticles(),
       fetchAdminPublishedBuilds(),
+      fetchAdminSuggestions(),
       fetchAdminAuditLog(),
     ])
     if (builds.error || articles.error || published.error || audit.error) {
       setError('could not load admin queues. make sure the Phase 3 staff admin SQL has been run and your profile role is staff or admin.')
     }
+    if (suggestionQueue.error) {
+      setError('could not load suggestions. make sure the Phase 4 suggestions SQL has been run in Supabase.')
+    }
     setPendingBuilds(builds.data)
     setPendingArticles(articles.data)
     setPublishedBuilds(published.data)
+    setSuggestions(suggestionQueue.error ? [] : suggestionQueue.data)
     setAuditLog(audit.data)
     setLoading(false)
   }
@@ -295,6 +348,20 @@ export default function AdminPage() {
     await load()
   }
 
+  const updateSuggestion = async (suggestion, status, note) => {
+    setBusy(true)
+    setError('')
+    setMessage('')
+    const { error: err } = await updateSuggestionStatus({ id: suggestion.id, status, note })
+    setBusy(false)
+    if (err) {
+      setError(err.message || 'could not update suggestion.')
+      return
+    }
+    setMessage(`suggestion marked ${status}.`)
+    await load()
+  }
+
   const viewBuild = (build) => navigate(`/builds/${buildRouteSlug(build)}`, { state: { from: 'admin' } })
 
   if (authLoading) return <div style={{ background: KW.bg, minHeight: '100vh', display: 'grid', placeItems: 'center', color: KW.text4, font: '400 11px var(--kw-mono)' }}>loading admin...</div>
@@ -345,7 +412,7 @@ export default function AdminPage() {
                   meta={`${build.layout || 'unknown layout'} · ${build.submitted_by || 'community builder'} · ${new Date(build.created_at).toLocaleDateString('en-US')}`}
                   note={build.review_note}
                   onView={() => navigate(`/builds/${buildRouteSlug(build)}`, { state: { from: 'admin' } })}
-                  onPublish={() => runAction({ kind: 'build', type: 'publish', label: 'publish', title: build.name, item: build }, '')}
+                  onPublish={() => openAction({ kind: 'build', type: 'publish', label: 'publish', title: build.name, item: build })}
                   onReject={() => openAction({ kind: 'build', type: 'reject', label: 'reject', title: build.name, item: build })}
                   onDelete={() => openAction({ kind: 'build', type: 'delete', label: 'delete', title: build.name, item: build })}
                 />
@@ -361,9 +428,20 @@ export default function AdminPage() {
                   meta={`${article.category} · ${article.submitted_by || 'community writer'} · ${new Date(article.created_at).toLocaleDateString('en-US')}`}
                   note={article.review_note}
                   onView={() => navigate(`/wiki/${article.slug}`, { state: { from: 'admin' } })}
-                  onPublish={() => runAction({ kind: 'wiki article', type: 'publish', label: 'publish', title: article.title, item: article }, '')}
+                  onPublish={() => openAction({ kind: 'wiki article', type: 'publish', label: 'publish', title: article.title, item: article })}
                   onReject={() => openAction({ kind: 'wiki article', type: 'reject', label: 'reject', title: article.title, item: article })}
                   onDelete={() => openAction({ kind: 'wiki article', type: 'delete', label: 'delete', title: article.title, item: article })}
+                />
+              ))}
+            </Section>
+
+            <Section title="open suggestions." eyebrow="community" empty="no open suggestions.">
+              {suggestions.map(suggestion => (
+                <SuggestionRow
+                  key={suggestion.id}
+                  suggestion={suggestion}
+                  busy={busy}
+                  onStatus={updateSuggestion}
                 />
               ))}
             </Section>

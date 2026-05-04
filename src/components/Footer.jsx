@@ -19,6 +19,8 @@ export default function Footer() {
         {[
           ['submit.', '/submit'],
           ['wiki.', '/wiki'],
+          ['contact.', '/contact'],
+          ['suggestions.', '/suggestions'],
         ].map(([label, to]) => (
           <Link key={label} to={to} style={{ cursor: "pointer", color: 'inherit', textDecoration: 'none' }}>{label}</Link>
         ))}

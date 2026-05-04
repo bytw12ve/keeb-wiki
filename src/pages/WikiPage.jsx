@@ -15,7 +15,12 @@ const SECTIONS = [
     title: 'about.',
     color: KW.lavender,
     desc: "keeb.wiki is a community driven archive for mechanical keyboard builds. Learn what we're about, how the site started, and how you can get involved.",
-    links: ['what is keeb.wiki', 'how to contribute', 'the team', 'contact'],
+    links: [
+      'what is keeb.wiki',
+      'how to contribute',
+      { label: 'contact the project', to: '/contact' },
+      { label: 'share a suggestion', to: '/suggestions' },
+    ],
   },
   {
     key: 'beginner',
@@ -55,7 +60,7 @@ const SECTIONS = [
     title: 'community & buying.',
     color: KW.green,
     desc: 'Where to buy keyboards, how group buys work, what to look for in a vendor, and how to navigate the keyboard community without getting burned.',
-    links: ['where to buy', 'group buys explained', 'in stock vs group buy'],
+    links: ['where to buy', 'group buys explained', 'in stock vs group buy', { label: 'suggest a topic', to: '/suggestions' }],
   },
 ]
 
@@ -79,7 +84,7 @@ function timeAgo(dateStr) {
   return `${Math.floor(days / 30)} months ago`
 }
 
-function SectionCard({ s, onClick }) {
+function SectionCard({ s, onClick, onLinkClick }) {
   const [hover, setHover] = useState(false)
   return (
     <div
@@ -98,7 +103,28 @@ function SectionCard({ s, onClick }) {
       <div style={{ font: '400 11px/1.6 var(--kw-mono)', color: KW.text2 }}>{s.desc}</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginTop: 4 }}>
         {s.links.map((l, i) => (
-          <div key={i} style={{ font: '400 10px var(--kw-mono)', color: KW.text3 }}>→ {l}</div>
+          typeof l === 'string' ? (
+            <div key={i} style={{ font: '400 10px var(--kw-mono)', color: KW.text3 }}>→ {l}</div>
+          ) : (
+            <button
+              key={i}
+              onClick={(e) => {
+                e.stopPropagation()
+                onLinkClick(l.to)
+              }}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: KW.lavender,
+                cursor: 'pointer',
+                font: '400 10px var(--kw-mono)',
+                padding: 0,
+                textAlign: 'left',
+              }}
+            >
+              → {l.label}
+            </button>
+          )
         ))}
       </div>
     </div>
@@ -329,7 +355,7 @@ export default function WikiPage() {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'var(--kw-grid-wiki-sections)', gap: 12, marginBottom: 40 }}>
               {SECTIONS.map(s => (
-                <SectionCard key={s.key} s={s} onClick={() => setSearchParams({ category: s.dbKey })} />
+                <SectionCard key={s.key} s={s} onClick={() => setSearchParams({ category: s.dbKey })} onLinkClick={navigate} />
               ))}
             </div>
 

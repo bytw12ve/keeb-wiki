@@ -68,6 +68,47 @@ export function getBuildTags(build) {
   return tags
 }
 
+export const BUILD_FILTERS = [
+  { label: 'all', value: 'all', type: 'all' },
+  { label: '60%', value: '60', type: 'layout', dbValue: '60%' },
+  { label: '65%', value: '65', type: 'layout', dbValue: '65%' },
+  { label: '75%', value: '75', type: 'layout', dbValue: '75%' },
+  { label: 'TKL', value: 'tkl', type: 'layout', dbValue: 'TKL' },
+  { label: 'WKL', value: 'wkl', type: 'layout', dbValue: 'WKL' },
+  { label: 'linear', value: 'linear', type: 'switch_type', dbValue: 'linear' },
+  { label: 'tactile', value: 'tactile', type: 'switch_type', dbValue: 'tactile' },
+  { label: 'clicky', value: 'clicky', type: 'switch_type', dbValue: 'clicky' },
+  { label: 'brass', value: 'brass', type: 'material', dbValue: 'brass' },
+  { label: 'aluminum', value: 'aluminum', type: 'material', dbValue: 'aluminum' },
+  { label: 'polycarbonate', value: 'polycarbonate', type: 'material', dbValue: 'polycarbonate' },
+]
+
+export const SUGGESTION_CATEGORIES = [
+  'missing wiki topic',
+  'build archive polish',
+  'community feature',
+  'bug report',
+]
+
+export function normalizeBuildFilter(value) {
+  const raw = String(value || 'all').trim().toLowerCase()
+  const normalized = raw.replace(/%25/g, '%').replace(/%/g, '')
+  const legacy = {
+    '40': '40',
+    '60': '60',
+    '65': '65',
+    '75': '75',
+    'tkl': 'tkl',
+    'wkl': 'wkl',
+    'full': 'full',
+  }[normalized] || normalized
+  return BUILD_FILTERS.some(f => f.value === legacy) ? legacy : 'all'
+}
+
+export function getBuildFilterMeta(value) {
+  return BUILD_FILTERS.find(f => f.value === normalizeBuildFilter(value)) || BUILD_FILTERS[0]
+}
+
 function cleanSearchTerm(value) {
   return String(value || '')
     .trim()
@@ -86,6 +127,14 @@ function isMissingPhase2Column(error) {
     || msg.includes('staff_picked_at')
 }
 
+function normalizeBuildSort(sort) {
+  return sort === 'oldest' ? 'oldest' : 'newest'
+}
+
+function normalizeSuggestionCategory(value) {
+  return SUGGESTION_CATEGORIES.includes(value) ? value : SUGGESTION_CATEGORIES[0]
+}
+
 function applyBuildFilters(query, q, filter) {
   const search = cleanSearchTerm(q)
 
@@ -93,38 +142,31 @@ function applyBuildFilters(query, q, filter) {
     query = query.or(`name.ilike.%${search}%,switches.ilike.%${search}%,layout.ilike.%${search}%`)
   }
 
-  if (filter && filter !== 'all') {
-    const layoutFilters = ['60%','65%','75%','tkl','wkl','full','40%']
-    const materialFilters = ['brass','aluminum','polycarbonate','steel','carbon fiber','pom']
-    const switchTypeFilters = ['linear','tactile','clicky']
-    const f = cleanSearchTerm(filter).toLowerCase()
-
-    if (switchTypeFilters.includes(f)) {
-      query = query.eq('switch_type', f)
-    } else if (layoutFilters.some(l => f === l.replace('%','')||f===l)) {
-      query = query.ilike('layout', `%${f}%`)
-    } else if (materialFilters.includes(f)) {
-      query = query.ilike('case_material', `%${f}%`)
-    } else {
-      query = query.ilike('layout', `%${f}%`)
-    }
+  const meta = getBuildFilterMeta(filter)
+  if (meta.type === 'layout') {
+    query = query.eq('layout', meta.dbValue)
+  } else if (meta.type === 'switch_type') {
+    query = query.eq('switch_type', meta.dbValue)
+  } else if (meta.type === 'material') {
+    query = query.ilike('case_material', `%${meta.dbValue}%`)
   }
 
   return query
 }
 
-export async function fetchBuilds({ q = '', filter = 'all' } = {}) {
+export async function fetchBuilds({ q = '', filter = 'all', sort = 'newest' } = {}) {
+  const ascending = normalizeBuildSort(sort) === 'oldest'
   let query = supabase
     .from('builds')
     .select('*')
     .is('deleted_at', null)
     .or('status.eq.published,status.is.null')
-    .order('created_at', { ascending: false })
+    .order('created_at', { ascending })
   query = applyBuildFilters(query, q, filter)
 
   let { data, error } = await query
   if (error && isMissingPhase2Column(error)) {
-    query = supabase.from('builds').select('*').order('created_at', { ascending: false })
+    query = supabase.from('builds').select('*').order('created_at', { ascending })
     ;({ data, error } = await applyBuildFilters(query, q, filter))
   }
   return { data: data || [], error }
@@ -451,6 +493,17 @@ export async function fetchAdminAuditLog({ limit = 20 } = {}) {
   return { data: data || [], error }
 }
 
+export async function fetchAdminSuggestions({ status = 'open', limit = 25 } = {}) {
+  let query = supabase
+    .from('suggestions')
+    .select('*')
+    .order('created_at', { ascending: true })
+    .limit(limit)
+  if (status) query = query.eq('status', status)
+  const { data, error } = await query
+  return { data: data || [], error }
+}
+
 export async function moderateBuild({ id, status, note }) {
   const { data, error } = await supabase
     .rpc('staff_moderate_build', {
@@ -511,6 +564,21 @@ export async function setBuildStaffPick({ id, picked, order, note }) {
   return { data, error }
 }
 
+export async function updateSuggestionStatus({ id, status, note }) {
+  const nextStatus = ['open', 'triaged', 'closed'].includes(status) ? status : 'open'
+  const { data, error } = await supabase
+    .from('suggestions')
+    .update({
+      status: nextStatus,
+      staff_note: note?.trim() || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', id)
+    .select()
+    .single()
+  return { data, error }
+}
+
 export async function updateOwnWikiArticle(id, patch) {
   const { data, error } = await supabase
     .from('wiki_articles')
@@ -554,6 +622,28 @@ export async function submitWikiArticle({ title, category, description, tags, fo
         : null,
       combined_content: format === 'combined' ? combined : null,
       status: 'pending',
+      user_id: userId,
+      submitted_by: submittedBy,
+    })
+    .select()
+    .single()
+  return { data, error }
+}
+
+export async function submitSuggestion({ category, title, message, pageUrl, userId, submittedBy }) {
+  const cleanTitle = String(title || '').trim().slice(0, 120)
+  const cleanMessage = String(message || '').trim().slice(0, 4000)
+  const cleanPageUrl = String(pageUrl || '').trim().slice(0, 500)
+  if (!cleanTitle || !cleanMessage) return { data: null, error: new Error('Title and message are required.') }
+
+  const { data, error } = await supabase
+    .from('suggestions')
+    .insert({
+      category: normalizeSuggestionCategory(category),
+      title: cleanTitle,
+      message: cleanMessage,
+      page_url: cleanPageUrl || null,
+      status: 'open',
       user_id: userId,
       submitted_by: submittedBy,
     })

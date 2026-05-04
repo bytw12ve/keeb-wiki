@@ -281,21 +281,44 @@ export default function DetailsPage() {
         <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 14 }}>
           <div>
             <div style={{ font: '700 9px var(--kw-mono)', color: KW.text4, letterSpacing: '.22em', textTransform: 'uppercase', marginBottom: 6 }}>photos</div>
-            <div style={{ font: '700 16px var(--kw-mono)', color: KW.text }}>build gallery.</div>
+            <div style={{ font: '700 16px var(--kw-mono)', color: KW.text }}>{hasPhotos && photos.length === 1 ? 'photo detail.' : 'build gallery.'}</div>
           </div>
           <span style={{ font: '400 10px var(--kw-mono)', color: KW.text3 }}>
             {hasPhotos ? `${photos.length} ${photos.length === 1 ? 'photo' : 'photos'}` : 'procedural previews'}
           </span>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'var(--kw-grid-photos)', gap: 10 }}>
-          {galleryItems.map((item, i) => (
-            typeof item === 'string' && item.startsWith('http')
-              ? <button key={i} onClick={() => setLightboxIndex(i)} style={{ paddingTop: '75%', position: 'relative', borderRadius: 6, overflow: 'hidden', border: 'none', background: 'transparent', cursor: 'zoom-in' }}>
-                  <img src={item} alt={`${build.name} photo ${i + 1}`} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
-                </button>
-              : <GalleryTile key={i} palette={item} layout={layoutCode} seed={i * 7 + 3} />
-          ))}
-        </div>
+        {hasPhotos && photos.length === 1 ? (
+          <button
+            onClick={() => setLightboxIndex(0)}
+            style={{
+              width: '100%',
+              background: KW.surface,
+              border: `1px solid ${KW.border}`,
+              borderRadius: 8,
+              padding: 0,
+              overflow: 'hidden',
+              color: KW.text3,
+              font: '400 11px/1.7 var(--kw-mono)',
+              textAlign: 'left',
+              cursor: 'zoom-in',
+            }}
+          >
+            <img src={photos[0]} alt={`${build.name} photo 1`} style={{ display: 'block', width: '100%', maxHeight: 360, objectFit: 'cover' }} />
+            <span style={{ display: 'block', padding: 14 }}>
+              one uploaded photo is available. click to open the full-size image.
+            </span>
+          </button>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'var(--kw-grid-photos)', gap: 10 }}>
+            {galleryItems.map((item, i) => (
+              typeof item === 'string' && item.startsWith('http')
+                ? <button key={i} onClick={() => setLightboxIndex(i)} style={{ paddingTop: '75%', position: 'relative', borderRadius: 6, overflow: 'hidden', border: 'none', background: 'transparent', cursor: 'zoom-in' }}>
+                    <img src={item} alt={`${build.name} photo ${i + 1}`} style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                  </button>
+                : <GalleryTile key={i} palette={item} layout={layoutCode} seed={i * 7 + 3} />
+            ))}
+          </div>
+        )}
       </div>
       <Lightbox
         photos={photos}

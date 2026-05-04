@@ -150,6 +150,7 @@ export default function BuildEditPage() {
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
   const toggleArr = (k, v) => setForm(f => ({ ...f, [k]: f[k]?.includes(v) ? f[k].filter(x => x !== v) : [...(f[k] || []), v] }))
+  const photoCount = photos.filter(Boolean).length
 
   const addPhoto = (file, idx) => {
     if (!PHOTO_TYPES.includes(file.type)) {
@@ -186,8 +187,20 @@ export default function BuildEditPage() {
 
   const save = async () => {
     if (saving) return
-    if (!form.name?.trim() || !form.switch_type) {
-      setError('keyboard name and switch type are required.')
+    if (!form.name?.trim()) {
+      setError('keyboard name is required.')
+      return
+    }
+    if (!form.layout) {
+      setError('layout is required.')
+      return
+    }
+    if (!form.switch_type) {
+      setError('switch type is required for filtering.')
+      return
+    }
+    if (photoCount < 1) {
+      setError('keep at least one photo before saving.')
       return
     }
     setSaving(true)
@@ -299,7 +312,7 @@ export default function BuildEditPage() {
             {photos.map((p, i) => <PhotoSlot key={i} photo={p} index={i} onAdd={addPhoto} onRemove={removePhoto} />)}
           </div>
           <div style={{ font: '400 10px var(--kw-mono)', color: KW.text4, textAlign: 'right' }}>
-            {photos.filter(Boolean).length} / 6 photos added · click a photo to replace · jpg, png, webp, or gif · 5MB max each
+            {photoCount} / 6 photos added · 1 required · click a photo to replace · jpg, png, webp, or gif · 5MB max each
           </div>
         </FormSection>
         {error && <div style={{ font: '400 10px var(--kw-mono)', color: KW.pink, textAlign: 'right', marginBottom: 8 }}>{error}</div>}

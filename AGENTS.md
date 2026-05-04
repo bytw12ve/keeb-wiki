@@ -40,6 +40,8 @@ git -c commit.gpgsign=false commit
 - `/login` -> `LoginPage`
 - `/profile` -> `ProfilePage` (protected)
 - `/admin` -> `AdminPage` (protected, staff/admin only)
+- `/contact` -> `ContactPage`
+- `/suggestions` -> `SuggestionsPage`
 
 ## Design System
 
@@ -72,6 +74,12 @@ Wiki helpers:
 - `fetchWikiArticleBySlug(slug)`
 - `searchWikiArticles(q)`
 - `submitWikiArticle(data)`
+
+Suggestion helpers:
+- `SUGGESTION_CATEGORIES`
+- `submitSuggestion(data)`
+- `fetchAdminSuggestions({ status, limit })`
+- `updateSuggestionStatus({ id, status, note })`
 
 Auth/profile helpers:
 - `getSessionUser()`
@@ -112,6 +120,7 @@ SQL files must be run manually in the Supabase SQL Editor.
 - `supabase/phase3_staff_admin.sql` adds staff/admin roles, moderation RPCs, staff-pick management, permanent staff deletes, and audit logging.
 - `supabase/phase3_1_security_advisor_fixes.sql` applies Phase 3 Security Advisor fixes for function search paths, RPC grants, and staff-pick priority validation.
 - `supabase/phase3_2_launch_submission_requirements.sql` requires launch-ready build submissions to include name, layout, switch type, and at least one photo.
+- `supabase/phase4_suggestions.sql` adds logged-in suggestions with staff/admin review.
 
 Important columns:
 - `builds.user_id` references `auth.users(id)` for user-owned posts.
@@ -125,6 +134,8 @@ Important columns:
 - `wiki_articles.category` values: `beginner-guides`, `modding-guides`, `parts-glossary`, `sound-feel`, `community-buying`, `about`.
 - `wiki_articles.format` values: `sections`, `combined`.
 - `wiki_articles.status` values: `draft`, `pending`, `published`, `rejected`.
+- `suggestions.status` values: `open`, `triaged`, `closed`.
+- `suggestions.category` values: `missing wiki topic`, `build archive polish`, `community feature`, `bug report`.
 
 Supabase SQL editor note:
 - Price strings in `wiki.sql` seed JSON should use JSON unicode escaping for dollar signs inside `$j$...$j$` literals so the editor does not treat them as query parameters.
@@ -135,6 +146,7 @@ Supabase SQL editor note:
 - `src/components/BuildVisual.jsx` renders the first uploaded build photo when available and falls back to `KeebArt`.
 - `src/components/Tag.jsx` uses `tagKind()` and `TINT` for colored tag pills.
 - Active nav link detection uses `useLocation()` with `startsWith` checks.
+- `community.` nav opens a compact hover/focus bubble with `contact.` and `suggestions.`.
 - Signed-in nav should use one far-right `logged in as {username}.` account control; do not also show a separate `profile.` nav link.
 - The signed-in account control should open/hold a compact hover/focus bubble with `profile.` plus `logout.`; the account control itself should not navigate.
 - Usernames are created during signup but should not be self-editable from `/profile` in Phase 2.1.
@@ -224,7 +236,7 @@ Supabase SQL editor note:
 - [x] Fixed homepage featured-card proportions for short and long staff-pick summaries.
 - [x] Added launch submission requirements: name, layout, switch type, and at least one build photo.
 - [x] Added Phase 3.2 SQL for launch submission requirements.
-- [ ] Run `supabase/phase2_2_staff_picks.sql`, `supabase/phase2_3_hard_delete.sql`, `supabase/phase3_staff_admin.sql`, `supabase/phase3_1_security_advisor_fixes.sql`, and `supabase/phase3_2_launch_submission_requirements.sql` manually in the Supabase SQL Editor if they have not already been applied.
+- [ ] Run `supabase/phase2_2_staff_picks.sql`, `supabase/phase2_3_hard_delete.sql`, `supabase/phase3_staff_admin.sql`, `supabase/phase3_1_security_advisor_fixes.sql`, `supabase/phase3_2_launch_submission_requirements.sql`, and `supabase/phase4_suggestions.sql` manually in the Supabase SQL Editor if they have not already been applied.
 
 ## Admin Moderation QA
 
@@ -329,8 +341,9 @@ After staff-pick changes, verify the build appears or disappears from homepage `
 - [ ] Update Supabase Site URL and redirect URLs for the production domain.
 - [ ] Configure production auth email sender and templates after domain setup.
 - [ ] Turn email confirmation back on before public production use once SMTP/templates are ready.
-- [ ] Add a simple contact page.
-- [ ] Add a simple suggestions page.
+- [x] Add a simple contact page with launch contact address.
+- [x] Add a simple logged-in suggestions page with staff/admin review.
+- [ ] Run `supabase/phase4_suggestions.sql` manually in the Supabase SQL Editor.
 - [ ] Add Discord/community link after the Discord server exists.
 - [ ] Add optional build sound-test audio upload.
 - [ ] Add optional build video support, likely as an upload or external URL depending on storage/hosting limits.

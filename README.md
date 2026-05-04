@@ -2,7 +2,7 @@
 
 A community hub for mechanical keyboard enthusiasts — browse and share keyboard builds, and explore a wiki covering everything from beginner guides to advanced modding.
 
-Live at [keebwiki.com](https://keebwiki.com).
+Production domain target: `keebwiki.com` once the domain is purchased and configured.
 
 ## What it is
 
@@ -12,6 +12,8 @@ Live at [keebwiki.com](https://keebwiki.com).
 
 **Accounts** — Email and Google login. Logged-in users can submit builds and wiki articles, edit their own content, and track pending/published status from their profile.
 
+**Community feedback** — Contact and suggestions pages give visitors a clear launch-era path for questions, bug reports, and feature ideas.
+
 ## Features
 
 - Build browsing with search and filter (layout, switches, case material)
@@ -19,6 +21,7 @@ Live at [keebwiki.com](https://keebwiki.com).
 - Procedural keyboard art fallback when no photo is uploaded
 - Wiki articles by category with table of contents and reading progress
 - User submissions with a moderation workflow (pending → published)
+- Logged-in suggestion submissions with staff/admin review
 - Staff picks for homepage featured builds
 - Launch-ready build submissions require name, layout, switch type, and at least one photo
 - Permanent delete and edit for own content
@@ -28,6 +31,10 @@ Live at [keebwiki.com](https://keebwiki.com).
 - Vite + React 18
 - React Router v6
 - Supabase (PostgreSQL, auth, storage)
+
+## Deployment
+
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for the Vercel and Supabase launch checklist. Domain-specific values are intentionally pending until `keebwiki.com` is purchased.
 
 ## Status
 

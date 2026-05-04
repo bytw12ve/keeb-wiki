@@ -10,9 +10,12 @@ import Button from '../components/Button.jsx'
 import Input from '../components/Input.jsx'
 import BuildVisual from '../components/BuildVisual.jsx'
 import Toast from '../components/Toast.jsx'
-import { fetchBuilds, getBuildTags, buildRouteSlug } from '../lib/supabase.js'
+import { BUILD_FILTERS, fetchBuilds, getBuildTags, buildRouteSlug, getBuildFilterMeta, normalizeBuildFilter } from '../lib/supabase.js'
 
-const BUILDS_FILTERS = ['all','60%','65%','75%','TKL','linear','tactile','clicky','brass','aluminum','polycarbonate','WKL']
+const SORTS = {
+  newest: { label: 'newest', next: 'oldest' },
+  oldest: { label: 'oldest', next: 'newest' },
+}
 
 function GridBuildCard({ b, onClick }) {
   const [hover, setHover] = useState(false)
@@ -49,11 +52,18 @@ function GridBuildCard({ b, onClick }) {
 
 function SortButton({ value, onClick }) {
   const [hover, setHover] = useState(false)
+  const next = SORTS[value]?.next || 'newest'
   return (
-    <button onClick={onClick} disabled={!onClick} onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)} style={{
+    <button
+      type="button"
+      aria-label={`sort builds by ${next}`}
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
       height: 36, padding: '0 14px', borderRadius: 6, background: KW.surface2,
-      border: `1px solid ${hover && onClick ? KW.lavender : KW.surface3}`, color: hover && onClick ? KW.text : KW.text3,
-      font: '400 11px var(--kw-mono)', cursor: onClick ? 'pointer' : 'default',
+      border: `1px solid ${hover ? KW.lavender : KW.surface3}`, color: hover ? KW.text : KW.text3,
+      font: '400 11px var(--kw-mono)', cursor: 'pointer',
       display: 'inline-flex', alignItems: 'center', gap: 8,
       transition: 'all .18s', whiteSpace: 'nowrap',
     }}>
@@ -78,6 +88,31 @@ function PageButton({ children, active, onClick, disabled }) {
   )
 }
 
+function SubmitBuildCallout({ onClick }) {
+  return (
+    <div style={{
+      background: KW.surface,
+      border: `1px solid ${KW.border}`,
+      borderRadius: 8,
+      padding: 18,
+      marginBottom: 18,
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      gap: 16,
+      flexWrap: 'wrap',
+    }}>
+      <div>
+        <div style={{ font: '700 12px var(--kw-mono)', color: KW.text, marginBottom: 7 }}>built something worth sharing?</div>
+        <div style={{ font: '400 11px/1.6 var(--kw-mono)', color: KW.text3, maxWidth: 620 }}>
+          Add your keyboard to the archive with specs, photos, and notes. Submissions stay pending until they are reviewed.
+        </div>
+      </div>
+      <Button variant="secondary" onClick={onClick}>submit build →</Button>
+    </div>
+  )
+}
+
 const PAGE_SIZE = 15
 
 export default function BuildsPage() {
@@ -85,26 +120,29 @@ export default function BuildsPage() {
   const navigate = useNavigate()
 
   const [q, setQ] = useState(searchParams.get('q') || '')
-  const [filter, setFilter] = useState(searchParams.get('filter') || 'all')
+  const [filter, setFilter] = useState(normalizeBuildFilter(searchParams.get('filter')))
+  const [sort, setSort] = useState(searchParams.get('sort') === 'oldest' ? 'oldest' : 'newest')
   const [builds, setBuilds] = useState([])
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
+  const activeFilter = getBuildFilterMeta(filter)
 
   useEffect(() => {
     setLoading(true)
-    fetchBuilds({ q, filter }).then(({ data }) => {
+    fetchBuilds({ q, filter, sort }).then(({ data }) => {
       setBuilds(data)
       setLoading(false)
       setPage(1)
     })
-  }, [q, filter])
+  }, [q, filter, sort])
 
   useEffect(() => {
     const next = {}
     if (q.trim()) next.q = q.trim()
     if (filter !== 'all') next.filter = filter
+    next.sort = sort
     setSearchParams(next, { replace: true })
-  }, [q, filter, setSearchParams])
+  }, [q, filter, sort, setSearchParams])
 
   const paged = builds.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
   const totalPages = Math.max(1, Math.ceil(builds.length / PAGE_SIZE))
@@ -123,7 +161,7 @@ export default function BuildsPage() {
           <h1 style={{ font: '700 32px/1 var(--kw-mono)', color: KW.text, margin: 0 }}>all builds.</h1>
           <div style={{ font: '400 12px var(--kw-mono)', color: KW.text3, marginTop: 8 }}>
             <span style={{ color: KW.text }}>{builds.length || '—'}</span> builds in the archive
-            <span style={{ color: KW.text4, margin: '0 8px' }}>•</span>updated daily
+            <span style={{ color: KW.text4, margin: '0 8px' }}>•</span>community moderated
           </div>
         </div>
 
@@ -132,13 +170,15 @@ export default function BuildsPage() {
           <Input style={{ flex: 1, height: 36 }} placeholder="search builds, switches, layouts..."
             value={q} onChange={setQ} onKeyDown={(e) => { if (e.key === 'Enter') setPage(1) }} />
           <Button onClick={() => setPage(1)} style={{ height: 36 }}>search</Button>
-          <SortButton value="newest" />
+          <SortButton value={sort} onClick={() => setSort(SORTS[sort]?.next || 'newest')} />
         </div>
+
+        <SubmitBuildCallout onClick={() => navigate('/submit')} />
 
         {/* Filter pills */}
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 22, paddingBottom: 22, borderBottom: `1px solid ${KW.border}` }}>
-          {BUILDS_FILTERS.map(p => (
-            <Pill key={p} active={filter === p} onClick={() => setFilter(p)}>{p}</Pill>
+          {BUILD_FILTERS.map(p => (
+            <Pill key={p.value} active={filter === p.value} onClick={() => setFilter(p.value)}>{p.label}</Pill>
           ))}
         </div>
 
@@ -146,7 +186,7 @@ export default function BuildsPage() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, font: '400 10px var(--kw-mono)', color: KW.text3 }}>
           <span>
             {loading ? 'loading...' : <>showing <span style={{ color: KW.text }}>{firstResult}–{lastResult}</span> of <span style={{ color: KW.text }}>{builds.length}</span></>}
-            {filter !== 'all' && !loading && <span> · filtered by <span style={{ color: KW.lavender }}>{filter}</span></span>}
+            {filter !== 'all' && !loading && <span> · filtered by <span style={{ color: KW.lavender }}>{activeFilter.label}</span></span>}
           </span>
           <span>page {page} of {totalPages}</span>
         </div>

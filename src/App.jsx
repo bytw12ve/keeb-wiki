@@ -12,6 +12,8 @@ import ProfilePage from './pages/ProfilePage.jsx'
 import BuildEditPage from './pages/BuildEditPage.jsx'
 import WikiEditPage from './pages/WikiEditPage.jsx'
 import AdminPage from './pages/AdminPage.jsx'
+import ContactPage from './pages/ContactPage.jsx'
+import SuggestionsPage from './pages/SuggestionsPage.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 
 export default function App() {
@@ -29,6 +31,8 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
       <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
+      <Route path="/contact" element={<ContactPage />} />
+      <Route path="/suggestions" element={<SuggestionsPage />} />
     </Routes>
   )
 }
