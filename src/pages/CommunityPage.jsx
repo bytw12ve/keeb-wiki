@@ -8,7 +8,6 @@ import Button from '../components/Button.jsx'
 import { SUGGESTION_CATEGORIES, submitSuggestion } from '../lib/supabase.js'
 import { useAuth } from '../lib/auth.jsx'
 
-const CONTACT_EMAIL = 'contact@keebwiki.com'
 
 const CATEGORY_COPY = {
   'missing wiki topic': 'Tell us what guide, glossary entry, or comparison would have helped you earlier.',
@@ -162,30 +161,11 @@ export default function CommunityPage() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* Left: contact */}
-          <div style={{ background: KW.surface, border: `1px solid ${KW.border}`, borderRadius: 8, padding: 20 }}>
-            <div style={{ font: '700 9px var(--kw-mono)', color: KW.lavender, letterSpacing: '.24em', textTransform: 'uppercase', marginBottom: 12 }}>
-              contact
-            </div>
-            <div style={{ font: '700 13px var(--kw-mono)', color: KW.text, marginBottom: 10 }}>get in touch.</div>
-            <div style={{ font: '400 11px/1.7 var(--kw-mono)', color: KW.text3 }}>
-              For any questions, issues, or general notes, reach us at{' '}
-              <a href={`mailto:${CONTACT_EMAIL}`} style={{ color: KW.lavender, textDecoration: 'none' }}>
-                {CONTACT_EMAIL}
-              </a>
-              .
-            </div>
+        <div>
+          <div style={{ font: '700 9px var(--kw-mono)', color: KW.pink, letterSpacing: '.24em', textTransform: 'uppercase', marginBottom: 12 }}>
+            suggestions
           </div>
-
-          {/* Right: suggestions */}
           <div style={{ background: KW.surface, border: `1px solid ${KW.border}`, borderRadius: 8, padding: 20 }}>
-            <div style={{ font: '700 9px var(--kw-mono)', color: KW.pink, letterSpacing: '.24em', textTransform: 'uppercase', marginBottom: 12 }}>
-              suggestions
-            </div>
-            <div style={{ font: '400 11px/1.6 var(--kw-mono)', color: KW.text3, marginBottom: 16 }}>
-              Help shape the archive before launch. Suggestions stay private to the moderation team.
-            </div>
 
             {success && (
               <div style={{ background: KW.bg, border: `1px solid ${KW.green}`, borderRadius: 6, padding: 14, font: '400 11px/1.6 var(--kw-mono)', color: KW.green, marginBottom: 14 }}>
